@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConstraintForge — FPGA Timing Constraints for Every Interface</title>
+<meta name="description" content="Production-ready XDC, SDC, LPF and CST timing constraint templates for FPGA engineers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0E6D0;--bg2:#E8DABD;--bg3:#DFD0B0;
+  --ink:#1A0F05;--ink2:#3D2B14;--ink3:#6B4C2A;
+  --accent:#7A3B0E;--accent2:#A05020;
+  --border:#C8B090;--bl:#DDD0B8;
+  --green:#3A6030;--red:#8B1A0A;
+  --mono:'IBM Plex Mono',monospace;
+  --dsp:'Syne',sans-serif;
+  --body:'Instrument Sans',sans-serif;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --ease2:cubic-bezier(0.76,0,0.24,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--ink);color:var(--bg)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--accent)}
+
+/* ── GRAIN OVERLAY ── */
+.grain{
+  position:fixed;inset:0;z-index:9990;pointer-events:none;
+  opacity:.032;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size:180px;
+  animation:grainShift 0.15s steps(1) infinite;
+}
+@keyframes grainShift{
+  0%{background-position:0 0}25%{background-position:-40px -20px}
+  50%{background-position:20px 40px}75%{background-position:-20px 10px}
+}
+
+/* ── SCROLL PROGRESS ── */
+#progress{
+  position:fixed;top:0;left:0;height:2px;
+  background:var(--accent);z-index:1000;
+  width:0%;transition:width .1s linear;
+}
+
+/* ── PRELOADER ── */
+#loader{
+  position:fixed;inset:0;z-index:9000;
+  background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:clip-path 1s var(--ease2);
+  clip-path:polygon(0 0,100% 0,100% 100%,0 100%);
+}
+#loader.done{clip-path:polygon(0 0,100% 0,100% 0%,0 0%)}
+.loader-logo{
+  font-family:var(--dsp);font-size:13px;font-weight:700;
+  color:var(--bg);letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:40px;opacity:.5
+}
+.loader-num{
+  font-family:var(--dsp);font-size:clamp(64px,12vw,140px);
+  font-weight:800;color:var(--bg);line-height:1;
+  letter-spacing:-.06em;
+}
+.loader-bar{
+  width:200px;height:1px;background:rgba(240,230,208,.15);
+  margin-top:48px;position:relative;overflow:hidden
+}
+.loader-bar-fill{
+  position:absolute;top:0;left:-100%;height:100%;
+  background:var(--bg);transition:left .05s linear;
+}
+
+/* ── CUSTOM CURSOR ── */
+*{cursor:none!important}
+#cursorDot{
+  position:fixed;top:0;left:0;z-index:9999;pointer-events:none;
+  mix-blend-mode:difference;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--bg);
+  transform:translate(-50%,-50%);
+  transition:width .2s var(--ease),height .2s var(--ease);
+  will-change:left,top;
+}
+#cursorRing{
+  position:fixed;top:0;left:0;z-index:9998;pointer-events:none;
+  width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--ink);
+  transform:translate(-50%,-50%);
+  transition:width .35s var(--ease),height .35s var(--ease),
+             border-color .35s,opacity .35s,background .35s;
+  opacity:.4;will-change:left,top;
+}
+#cursorLabel{
+  position:fixed;z-index:9999;pointer-events:none;
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  color:var(--bg);letter-spacing:.08em;text-transform:uppercase;
+  transform:translate(-50%,-50%);opacity:0;
+  transition:opacity .2s;white-space:nowrap;
+}
+body.ch-link #cursorDot{width:60px;height:60px;background:var(--ink)}
+body.ch-link #cursorRing{width:60px;height:60px;opacity:0}
+body.ch-link #cursorLabel{opacity:1}
+body.ch-btn #cursorDot{width:52px;height:52px}
+body.ch-btn #cursorRing{width:52px;height:52px;opacity:0}
+body.ck #cursorDot{transform:translate(-50%,-50%) scale(.7)}
+@media(hover:none){#cursorDot,#cursorRing,#cursorLabel{display:none}*{cursor:auto!important}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  height:60px;display:flex;align-items:center;
+  padding:0 40px;gap:32px;
+  background:rgba(240,230,208,0);
+  backdrop-filter:blur(0px);
+  border-bottom:1px solid transparent;
+  transition:background .4s,backdrop-filter .4s,border-color .4s;
+}
+nav.scrolled{
+  background:rgba(240,230,208,0.92);
+  backdrop-filter:blur(24px);
+  border-color:var(--border);
+}
+.nav-logo{
+  font-family:var(--dsp);font-size:15px;font-weight:700;
+  letter-spacing:-.02em;display:flex;align-items:center;gap:10px;
+  color:var(--ink)
+}
+.logo-mark{
+  width:28px;height:28px;background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:var(--bg);
+  font-weight:600;letter-spacing:-.02em;
+  transition:background .2s;
+}
+.nav-logo:hover .logo-mark{background:var(--accent)}
+.nav-links{display:flex;gap:2px;margin-left:auto;align-items:center}
+.nav-links a{
+  font-size:13px;font-weight:500;color:var(--ink3);
+  padding:6px 14px;transition:color .2s,background .2s;
+  position:relative;overflow:hidden;
+}
+.nav-links a::after{
+  content:'';position:absolute;bottom:4px;left:14px;right:14px;
+  height:1px;background:var(--accent);
+  transform:scaleX(0);transform-origin:right;
+  transition:transform .3s var(--ease);
+}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a:hover::after{transform:scaleX(1);transform-origin:left}
+.nav-gh{
+  font-family:var(--mono)!important;font-size:11px!important;font-weight:600!important;
+  color:var(--bg)!important;background:var(--ink)!important;
+  padding:8px 16px!important;border:1px solid var(--ink)!important;
+  transition:background .2s,color .2s!important;
+}
+.nav-gh::after{display:none!important}
+.nav-gh:hover{background:var(--accent)!important;border-color:var(--accent)!important}
+
+/* ── HERO ── */
+.hero{
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:flex-start;justify-content:center;
+  padding:120px 40px 80px;
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.hero-bg-num{
+  position:absolute;right:-20px;bottom:-40px;
+  font-family:var(--dsp);font-size:clamp(200px,35vw,480px);
+  font-weight:800;color:var(--bg3);
+  line-height:1;letter-spacing:-.06em;
+  pointer-events:none;user-select:none;
+  opacity:.55;z-index:0;
+  transition:transform .1s linear;
+}
+.hero-line{
+  position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:var(--border);transform-origin:left;
+}
+.hero-tag{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  color:var(--accent);letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:32px;display:flex;align-items:center;gap:12px;
+  position:relative;z-index:1;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .7s var(--ease),transform .7s var(--ease);
+}
+.hero-tag::before{content:'';width:32px;height:1px;background:var(--accent)}
+body.loaded .hero-tag{opacity:1;transform:translateY(0)}
+.hero-h1-wrap{position:relative;z-index:1;overflow:hidden}
+h1{
+  font-family:var(--dsp);
+  font-size:clamp(40px,6.5vw,96px);
+  font-weight:800;line-height:.95;
+  letter-spacing:-.04em;
+  max-width:900px;
+  margin-bottom:36px;
+  word-break:keep-all;
+  hyphens:none;
+  overflow-wrap:normal;
+}
+h1 .accent-line{display:block;color:var(--accent)}
+.char{
+  display:inline-block;
+  white-space:nowrap;
+  opacity:0;transform:translateY(110%);
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+body.loaded .char{opacity:1;transform:translateY(0)}
+.hero-sub{
+  font-size:17px;font-weight:400;color:var(--ink3);
+  max-width:520px;line-height:1.7;margin-bottom:48px;
+  position:relative;z-index:1;
+  opacity:0;transform:translateY(24px);
+  transition:opacity .8s var(--ease) .5s,transform .8s var(--ease) .5s;
+}
+body.loaded .hero-sub{opacity:1;transform:translateY(0)}
+.hero-sub code{
+  font-family:var(--mono);font-size:13px;
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--accent);padding:1px 6px;
+}
+.hero-actions{
+  display:flex;gap:12px;flex-wrap:wrap;
+  position:relative;z-index:1;
+  opacity:0;transform:translateY(24px);
+  transition:opacity .8s var(--ease) .65s,transform .8s var(--ease) .65s;
+}
+body.loaded .hero-actions{opacity:1;transform:translateY(0)}
+.scroll-hint{
+  position:absolute;bottom:40px;left:40px;
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;
+  z-index:1;
+  opacity:0;transition:opacity .8s var(--ease) 1s;
+}
+body.loaded .scroll-hint{opacity:1}
+.scroll-line{width:40px;height:1px;background:var(--border);position:relative;overflow:hidden}
+.scroll-line::after{
+  content:'';position:absolute;left:-100%;top:0;
+  width:100%;height:100%;background:var(--accent);
+  animation:scanLine 2s ease-in-out infinite;
+}
+@keyframes scanLine{to{left:100%}}
+
+/* ── BUTTONS — magnetic ── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--body);font-size:13px;font-weight:600;
+  padding:12px 24px;border:1px solid var(--ink);
+  transition:background .2s,color .2s,border-color .2s,transform .3s var(--ease);
+  letter-spacing:.01em;white-space:nowrap;position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:var(--accent);
+  transform:translateY(101%);
+  transition:transform .35s var(--ease2);
+}
+.btn span{position:relative;z-index:1}
+.btn-solid{background:var(--ink);color:var(--bg)}
+.btn-solid::before{background:var(--accent)}
+.btn-solid:hover{border-color:var(--accent)}
+.btn-solid:hover::before{transform:translateY(0)}
+.btn-ghost{background:var(--bg2);color:var(--ink3);border-color:var(--border)}
+.btn-ghost::before{background:var(--ink)}
+.btn-ghost:hover{color:var(--bg);border-color:var(--ink)}
+.btn-ghost:hover::before{transform:translateY(0)}
+
+/* ── TICKER ── */
+.ticker{
+  overflow:hidden;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:var(--ink);color:var(--bg);
+  padding:12px 0;white-space:nowrap;
+}
+.ticker-inner{display:inline-flex;gap:0;animation:ticker 26s linear infinite}
+.ticker-inner:hover{animation-play-state:paused}
+.tick-item{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  padding:0 28px;letter-spacing:.04em;
+  border-right:1px solid rgba(240,230,208,.12);
+}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── STATS ── */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);position:relative;overflow:hidden;
+}
+.stat{
+  padding:48px 32px;border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.stat::before{
+  content:'';position:absolute;bottom:0;left:0;
+  width:100%;height:3px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .6s var(--ease);
+}
+.stat.visible::before{transform:scaleX(1)}
+.stat-num{
+  font-family:var(--dsp);font-size:clamp(52px,6vw,80px);
+  font-weight:800;line-height:1;letter-spacing:-.04em;
+  color:var(--ink);margin-bottom:8px;
+}
+.stat-label{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;
+}
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── TOOLS ── */
+.tools-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  border-bottom:1px solid var(--border);
+}
+.tool-card{
+  padding:64px 48px;border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.tool-card:last-child{border-right:none}
+.tool-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--ink);z-index:0;
+  transform:translateY(101%);
+  transition:transform .6s var(--ease2);
+}
+.tool-card:hover::before{transform:translateY(0)}
+.tool-card:hover .tool-number,.tool-card:hover .tool-kicker,
+.tool-card:hover h3,.tool-card:hover p,.tool-card:hover .tool-divider{color:var(--bg)!important;border-color:rgba(240,230,208,.2)!important}
+.tool-card:hover .btn-solid{background:var(--bg);color:var(--ink);border-color:var(--bg)}
+.tool-card:hover .btn-solid::before{background:var(--accent)}
+.tool-card:hover .btn-outline{background:rgba(240,230,208,.1);color:var(--bg);border-color:var(--bg)}
+.tool-number{
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  color:var(--ink3);letter-spacing:.1em;margin-bottom:20px;
+  position:relative;z-index:1;transition:color .3s;
+}
+.tool-kicker{
+  font-size:11px;font-weight:500;color:var(--ink3);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:16px;position:relative;z-index:1;
+  display:flex;align-items:center;gap:12px;
+  transition:color .3s;
+}
+.new-tag{
+  background:var(--accent);color:var(--bg);
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  padding:2px 7px;letter-spacing:.06em;
+}
+.tool-divider{height:1px;background:var(--border);margin-bottom:24px;position:relative;z-index:1;transition:border-color .3s}
+.tool-card h3{
+  font-family:var(--dsp);font-size:clamp(28px,3.5vw,40px);
+  font-weight:800;letter-spacing:-.03em;line-height:1.05;
+  margin-bottom:20px;position:relative;z-index:1;transition:color .3s;
+}
+.tool-card p{
+  font-size:14px;color:var(--ink3);line-height:1.7;
+  margin-bottom:36px;max-width:380px;
+  position:relative;z-index:1;transition:color .3s;
+}
+.tool-card .btn{position:relative;z-index:1}
+.btn-outline{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-outline::before{background:var(--ink)}
+.btn-outline:hover{color:var(--bg)}
+.btn-outline:hover::before{transform:translateY(0)}
+
+/* ── SECTION ── */
+#interfaces{border-top:1px solid var(--border)}
+.section-header{
+  padding:64px 40px 40px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  gap:20px;flex-wrap:wrap;
+}
+.section-tag{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:var(--ink3);letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:12px;display:flex;align-items:center;gap:10px;
+}
+.section-tag::before{content:'';width:20px;height:1px;background:var(--ink3)}
+.section-title{
+  font-family:var(--dsp);font-size:clamp(36px,5vw,64px);
+  font-weight:800;letter-spacing:-.04em;line-height:1;
+}
+
+/* ── SEARCH ── */
+.search-wrap{
+  padding:24px 40px;border-bottom:1px solid var(--border);
+  background:var(--bg2);position:relative;
+}
+.search-icon{
+  position:absolute;left:56px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:14px;color:var(--ink3);
+  pointer-events:none;
+}
+#search{
+  width:100%;background:transparent;border:none;
+  font-family:var(--body);font-size:15px;color:var(--ink);
+  padding:4px 20px 4px 36px;outline:none;
+  border-bottom:1px solid var(--border);
+  transition:border-color .2s;
+}
+#search:focus{border-color:var(--ink);cursor:text!important}
+#search::placeholder{color:var(--ink3)}
+
+/* ── FILTER ── */
+.filter-bar{
+  display:flex;gap:0;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  position:relative;
+}
+.filter{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:16px 24px;border:none;border-right:1px solid var(--border);
+  background:var(--bg2);color:var(--ink3);
+  transition:background .2s,color .2s;white-space:nowrap;
+}
+.filter:hover{background:var(--bg3);color:var(--ink)}
+.filter.active{background:var(--ink);color:var(--bg)}
+
+/* ── CARDS ── */
+.card-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  border-top:1px solid var(--border);
+}
+.card{
+  padding:28px 32px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+  display:block;
+  opacity:0;transform:translateY(30px);
+  transition:opacity .6s var(--ease),transform .6s var(--ease),background .25s;
+}
+.card.visible{opacity:1;transform:translateY(0)}
+.card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--bg3);
+  transform:translateY(101%);
+  transition:transform .45s var(--ease2);
+}
+.card:hover::before{transform:translateY(0)}
+.card:hover .card-title,.card:hover .card-desc{position:relative;z-index:1}
+.card-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;position:relative;z-index:1;
+}
+.card-type{
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;
+}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{
+  font-size:9px;padding:2px 7px;font-weight:600;
+  font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid;
+}
+.tag-xdc{border-color:var(--accent);color:var(--accent)}
+.tag-sdc{border-color:var(--gold,#8B5E1A);color:var(--gold,#8B5E1A)}
+.tag-lpf{border-color:var(--green);color:var(--green)}
+.tag-qsf{border-color:var(--ink3);color:var(--ink3)}
+.tag-cst{border-color:var(--red);color:var(--red)}
+.card-title{
+  font-family:var(--dsp);font-size:17px;font-weight:700;
+  letter-spacing:-.02em;margin-bottom:8px;
+  position:relative;z-index:1;
+}
+.card-desc{
+  font-size:12px;color:var(--ink3);line-height:1.65;
+  margin-bottom:16px;position:relative;z-index:1;
+}
+.card-path{
+  font-family:var(--mono);font-size:10px;color:var(--ink3);
+  opacity:.6;position:relative;z-index:1;
+}
+.card-arrow{
+  position:absolute;bottom:24px;right:28px;
+  font-size:18px;color:var(--ink3);z-index:1;
+  transform:translateX(-4px);opacity:0;
+  transition:transform .3s var(--ease),opacity .3s;
+}
+.card:hover .card-arrow{transform:translateX(0);opacity:1}
+.no-results{
+  grid-column:1/-1;padding:80px 40px;
+  font-family:var(--mono);font-size:12px;color:var(--ink3);
+  text-align:center;
+}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  background:var(--ink);color:var(--bg);
+  padding:60px 40px 40px;
+}
+.footer-inner{
+  max-width:1400px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:40px;border-bottom:1px solid rgba(240,230,208,.1);
+  padding-bottom:40px;margin-bottom:32px;
+}
+.footer-logo{
+  font-family:var(--dsp);font-size:48px;font-weight:800;
+  letter-spacing:-.04em;line-height:1;color:var(--bg);
+  opacity:.12;
+}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap;align-self:end}
+.footer-links a{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  color:rgba(240,230,208,.5);letter-spacing:.06em;text-transform:uppercase;
+  transition:color .2s;
+}
+.footer-links a:hover{color:var(--bg)}
+.footer-copy{
+  font-family:var(--mono);font-size:10px;
+  color:rgba(240,230,208,.3);letter-spacing:.04em;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  nav{padding:0 20px}
+  .nav-links a:not(.nav-gh){display:none}
+  .hero{padding:100px 20px 60px}
+  .scroll-hint{left:20px}
+  .stats{grid-template-columns:1fr 1fr}
+  .tools-grid{grid-template-columns:1fr}
+  .tool-card{border-right:none;border-bottom:1px solid var(--border)}
+  .card-grid{grid-template-columns:1fr}
+  .section-header{padding:40px 20px 24px}
+  .search-wrap{padding:20px}
+  .search-icon{left:36px}
+  footer{padding:40px 20px}
+  .footer-inner{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stats{grid-template-columns:1fr}
+  .hero-actions{flex-direction:column}
+  .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- GRAIN + PROGRESS + CURSOR -->
+<div class="grain" aria-hidden="true"></div>
+<div id="progress"></div>
+<div id="cursorDot"></div>
+<div id="cursorRing"></div>
+<div id="cursorLabel">view</div>
+
+<!-- PRELOADER -->
+<div id="loader">
+  <div class="loader-logo">ConstraintForge</div>
+  <div class="loader-num" id="loaderNum">0</div>
+  <div class="loader-bar"><div class="loader-bar-fill" id="loaderFill"></div></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="nav-logo" href="index.html">
+    <div class="logo-mark">CF</div>
+    ConstraintForge
+  </a>
+  <div class="nav-links">
+    <a href="#interfaces">Interfaces</a>
+    <a href="#boards">Boards</a>
+    <a href="timing-calculator.html">Calculator</a>
+    <a href="ai-generator.html">AI Generator</a>
+    <a class="nav-gh btn" href="https://github.com/devtyagi3909/constraintforge" target="_blank" rel="noopener"><span>GitHub ↗</span></a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-num" id="heroBgNum">CF</div>
+  <div class="hero-tag">FPGA Timing Constraint Library</div>
+  <div class="hero-h1-wrap">
+    <h1 id="heroH1">
+      The timing<br>constraint repo
+      <span class="accent-line">that should have<br>existed years ago.</span>
+    </h1>
+  </div>
+  <p class="hero-sub">
+    Annotated <code>.xdc</code>, <code>.sdc</code>, <code>.lpf</code>, and <code>.cst</code> templates for every interface — with the theory, formulas, and toolchain guidance engineers actually need.
+  </p>
+  <div class="hero-actions">
+    <a class="btn btn-solid" href="https://github.com/devtyagi3909/constraintforge" target="_blank" rel="noopener"><span>View on GitHub</span></a>
+    <a class="btn btn-ghost" href="timing-calculator.html"><span>Timing Calculator</span></a>
+    <a class="btn btn-ghost" href="ai-generator.html"><span>AI Generator</span></a>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    scroll to explore
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-inner">
+    <span class="tick-item">XDC — Vivado</span><span class="tick-item">SDC — Quartus</span>
+    <span class="tick-item">LPF — nextpnr</span><span class="tick-item">CST — Gowin EDA</span>
+    <span class="tick-item">SPI Master + Slave</span><span class="tick-item">UART</span>
+    <span class="tick-item">I2C</span><span class="tick-item">DDR3 SDRAM</span>
+    <span class="tick-item">LVDS</span><span class="tick-item">HDMI TMDS</span>
+    <span class="tick-item">RGMII Ethernet</span><span class="tick-item">MIPI CSI-2</span>
+    <span class="tick-item">AXI4-Lite</span><span class="tick-item">I2S Audio</span>
+    <span class="tick-item">CDC Patterns</span><span class="tick-item">Multicycle Path</span>
+    <span class="tick-item">XDC — Vivado</span><span class="tick-item">SDC — Quartus</span>
+    <span class="tick-item">LPF — nextpnr</span><span class="tick-item">CST — Gowin EDA</span>
+    <span class="tick-item">SPI Master + Slave</span><span class="tick-item">UART</span>
+    <span class="tick-item">I2C</span><span class="tick-item">DDR3 SDRAM</span>
+    <span class="tick-item">LVDS</span><span class="tick-item">HDMI TMDS</span>
+    <span class="tick-item">RGMII Ethernet</span><span class="tick-item">MIPI CSI-2</span>
+    <span class="tick-item">AXI4-Lite</span><span class="tick-item">I2S Audio</span>
+    <span class="tick-item">CDC Patterns</span><span class="tick-item">Multicycle Path</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats" id="stats">
+  <div class="stat reveal">
+    <div class="stat-num" data-target="14">0</div>
+    <div class="stat-label">Interfaces covered</div>
+  </div>
+  <div class="stat reveal" style="transition-delay:.08s">
+    <div class="stat-num" data-target="18">0</div>
+    <div class="stat-label">Boards supported</div>
+  </div>
+  <div class="stat reveal" style="transition-delay:.16s">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Toolchain formats</div>
+  </div>
+  <div class="stat reveal" style="transition-delay:.24s">
+    <div class="stat-num" data-target="100">0</div>
+    <div class="stat-label">Annotated files</div>
+  </div>
+</div>
+
+<!-- TOOLS -->
+<div class="tools-grid">
+  <div class="tool-card reveal">
+    <div class="tool-number">01</div>
+    <div class="tool-kicker">Interactive tool</div>
+    <div class="tool-divider"></div>
+    <h3>Timing Budget<br>Calculator</h3>
+    <p>Paste datasheet values — tCO, tSU, tH — and get the exact set_input_delay / set_output_delay lines. Shows setup and hold slack with a visual timeline. No guessing what the formula is.</p>
+    <a class="btn btn-solid" href="timing-calculator.html"><span>Open Calculator</span></a>
+  </div>
+  <div class="tool-card reveal" style="transition-delay:.1s">
+    <div class="tool-number">02</div>
+    <div class="tool-kicker">AI-powered <span class="new-tag">New</span></div>
+    <div class="tool-divider"></div>
+    <h3>AI Constraint<br>Generator</h3>
+    <p>Paste your Verilog or VHDL top-level module. The AI reads every port, identifies clocks and interfaces, maps pins to your board, and writes the complete constraint file in seconds.</p>
+    <a class="btn btn-outline" href="ai-generator.html"><span>Open AI Generator</span></a>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<section id="interfaces">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">constraint library</div>
+      <h2 class="section-title">Browse Everything</h2>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ink3)" id="cardCount"></div>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">/</span>
+    <input type="text" id="search" placeholder="Search — 'SPI', 'Basys3', 'DDR3', 'false path'…" oninput="filterCards()">
+  </div>
+  <div class="filter-bar" id="boards">
+    <button class="filter active" onclick="setFilter('all')">All</button>
+    <button class="filter" onclick="setFilter('interface')">Interfaces</button>
+    <button class="filter" onclick="setFilter('board')">Boards</button>
+    <button class="filter" onclick="setFilter('pattern')">Timing Patterns</button>
+    <button class="filter" onclick="setFilter('xdc')">XDC</button>
+    <button class="filter" onclick="setFilter('sdc')">SDC</button>
+  </div>
+  <div class="card-grid" id="grid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">CF</div>
+    <div class="footer-links">
+      <a href="https://github.com/devtyagi3909/constraintforge" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="https://github.com/devtyagi3909/constraintforge/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing ↗</a>
+      <a href="timing-calculator.html">Calculator</a>
+      <a href="ai-generator.html">AI Generator</a>
+    </div>
+  </div>
+  <div class="footer-copy">MIT License — Built by <a href="https://www.linkedin.com/in/dev-tyagi3909/" target="_blank" rel="noopener" style="color:rgba(240,230,208,.6);text-decoration:underline;text-underline-offset:3px">Dev Tyagi</a>. Contributions welcome.</div>
+</footer>
+
+<script>
+/* ─── PRELOADER ─────────────────────────────────────── */
+(function(){
+  const num=document.getElementById('loaderNum');
+  const fill=document.getElementById('loaderFill');
+  const loader=document.getElementById('loader');
+  let count=0;
+  const iv=setInterval(()=>{
+    count+=Math.floor(Math.random()*4)+1;
+    if(count>=100){count=100;clearInterval(iv);
+      setTimeout(()=>{
+        loader.classList.add('done');
+        document.body.classList.add('loaded');
+        setTimeout(()=>{loader.style.display='none'},1100);
+      },300);
+    }
+    num.textContent=count;
+    fill.style.left=(-100+count)+'%';
+  },28);
+})();
+
+/* ─── SCROLL PROGRESS ───────────────────────────────── */
+window.addEventListener('scroll',()=>{
+  const pct=(window.scrollY/(document.documentElement.scrollHeight-window.innerHeight))*100;
+  document.getElementById('progress').style.width=pct+'%';
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>60);
+},{ passive:true });
+
+/* ─── PARALLAX BG NUM ───────────────────────────────── */
+window.addEventListener('scroll',()=>{
+  const el=document.getElementById('heroBgNum');
+  if(el) el.style.transform=`translateY(${window.scrollY*0.25}px)`;
+},{ passive:true });
+
+/* ─── CURSOR ────────────────────────────────────────── */
+(function(){
+  const dot=document.getElementById('cursorDot');
+  const ring=document.getElementById('cursorRing');
+  const label=document.getElementById('cursorLabel');
+  if(!dot||!ring) return;
+  let mx=0,my=0,rx=0,ry=0;
+
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    dot.style.left=mx+'px'; dot.style.top=my+'px';
+    label.style.left=mx+'px'; label.style.top=my+'px';
+  });
+  (function loop(){
+    rx+=(mx-rx)*.09; ry+=(my-ry)*.09;
+    ring.style.left=Math.round(rx*10)/10+'px';
+    ring.style.top=Math.round(ry*10)/10+'px';
+    requestAnimationFrame(loop);
+  })();
+
+  // Cards → VIEW cursor
+  document.addEventListener('mouseover',e=>{
+    const card=e.target.closest('.card');
+    const btn=e.target.closest('.btn');
+    const link=e.target.closest('a:not(.btn):not(.nav-logo),button:not(.btn):not(.filter)');
+    const filter=e.target.closest('.filter');
+    document.body.classList.remove('ch-link','ch-btn');
+    if(card){document.body.classList.add('ch-link');label.textContent='view'}
+    else if(btn){document.body.classList.add('ch-btn')}
+    else if(filter||link){document.body.classList.add('ch-btn')}
+  });
+
+  document.addEventListener('mousedown',()=>document.body.classList.add('ck'));
+  document.addEventListener('mouseup',()=>document.body.classList.remove('ck'));
+  document.addEventListener('mouseleave',()=>{dot.style.opacity='0';ring.style.opacity='0';label.style.opacity='0'});
+  document.addEventListener('mouseenter',()=>{dot.style.opacity='';ring.style.opacity='';});
+})();
+
+/* ─── SPLIT TEXT HERO ───────────────────────────────── */
+(function(){
+  const h1=document.getElementById('heroH1');
+  if(!h1) return;
+  let wIdx=0;
+  function splitNode(node){
+    if(node.nodeType===3){
+      const words=node.textContent.split(/( +)/);
+      const frag=document.createDocumentFragment();
+      words.forEach(w=>{
+        if(!w){return;}
+        if(w.trim()===''){frag.appendChild(document.createTextNode(w));return;}
+        const sp=document.createElement('span');
+        sp.className='char';
+        sp.style.whiteSpace='nowrap';
+        sp.textContent=w;
+        sp.style.transitionDelay=`${0.08+(wIdx*0.07)}s`;
+        wIdx++;
+        frag.appendChild(sp);
+        // space after each word
+        frag.appendChild(document.createTextNode(' '));
+      });
+      node.parentNode.replaceChild(frag,node);
+    } else if(node.nodeType===1&&node.nodeName!=='BR'){
+      [...node.childNodes].forEach(splitNode);
+    }
+  }
+  [...h1.childNodes].forEach(splitNode);
+})();
+
+/* ─── MAGNETIC BUTTONS ──────────────────────────────── */
+document.querySelectorAll('.btn').forEach(btn=>{
+  btn.addEventListener('mousemove',e=>{
+    const r=btn.getBoundingClientRect();
+    const x=e.clientX-r.left-r.width/2;
+    const y=e.clientY-r.top-r.height/2;
+    btn.style.transform=`translate(${x*.18}px,${y*.25}px)`;
+  });
+  btn.addEventListener('mouseleave',()=>{btn.style.transform='';});
+});
+
+/* ─── 3D CARD TILT ──────────────────────────────────── */
+function addTilt(card){
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`perspective(600px) rotateY(${x*6}deg) rotateX(${-y*4}deg) translateZ(4px)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+}
+
+/* ─── INTERSECTION OBSERVER ─────────────────────────── */
+function countUp(el,target){
+  let v=0,step=target/60;
+  const iv=setInterval(()=>{
+    v=Math.min(v+step,target);
+    el.textContent=Math.floor(v)+(target>=100?'+':'');
+    if(v>=target)clearInterval(iv);
+  },16);
+}
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      e.target.querySelectorAll('[data-target]').forEach(el=>countUp(el,+el.dataset.target));
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('.reveal,.stat').forEach(el=>io.observe(el));
+
+/* ─── CARD DATA ─────────────────────────────────────── */
+const B='https://github.com/devtyagi3909/constraintforge';
+const ITEMS=[
+  {type:'interface',title:'Primary Clock',desc:'Single-ended and differential. Foundation of every design — without this Vivado has no idea how fast your clock runs.',tags:['xdc','sdc','lpf'],path:'interfaces/clocks/',href:`${B}/tree/main/interfaces/clocks`,kw:'clock mmcm pll create_clock'},
+  {type:'interface',title:'Generated Clock (MMCM/PLL)',desc:'Constrain MMCM and PLL output clocks correctly. Missing this is a very common mistake.',tags:['xdc','sdc'],path:'interfaces/clocks/',href:`${B}/blob/main/interfaces/clocks/generated-clock-mmcm.xdc`,kw:'mmcm pll generated clock'},
+  {type:'interface',title:'UART',desc:"Async serial — false path is the right approach. Don't use set_input_delay, there's no clock to reference.",tags:['xdc','sdc','lpf'],path:'interfaces/uart/',href:`${B}/tree/main/interfaces/uart`,kw:'uart serial async false path'},
+  {type:'interface',title:'SPI Master',desc:'Source-synchronous. Generated SCLK clock on the output port, then set_input/output_delay relative to it.',tags:['xdc','sdc','lpf'],path:'interfaces/spi/',href:`${B}/blob/main/interfaces/spi/spi-master.xdc`,kw:'spi master source synchronous generated clock'},
+  {type:'interface',title:'SPI Slave',desc:'Incoming SCLK is a primary clock here, not a generated one. Needs CDC to sys_clk domain.',tags:['xdc','sdc'],path:'interfaces/spi/',href:`${B}/blob/main/interfaces/spi/spi-slave.xdc`,kw:'spi slave primary clock cdc async'},
+  {type:'interface',title:'I2C',desc:'Open-drain async. False path on both SCL and SDA. DRIVE and SLEW settings matter for signal integrity.',tags:['xdc','sdc','lpf'],path:'interfaces/i2c/',href:`${B}/tree/main/interfaces/i2c`,kw:'i2c open drain scl sda false path'},
+  {type:'interface',title:'DDR3 SDRAM',desc:'MIG/EMIF IP generates DDR3 constraints. This covers what you add alongside them — ref clock, UI clock CDC.',tags:['xdc','sdc'],path:'interfaces/ddr3/',href:`${B}/tree/main/interfaces/ddr3`,kw:'ddr3 sdram mig emif memory'},
+  {type:'interface',title:'LVDS',desc:'Source-synchronous differential. SDR and DDR capture, DIFF_TERM, CDC to system clock domain.',tags:['xdc','sdc','lpf'],path:'interfaces/lvds/',href:`${B}/tree/main/interfaces/lvds`,kw:'lvds differential source synchronous adc'},
+  {type:'interface',title:'HDMI — TMDS',desc:'Pixel clock MMCM at 5x for SERDES. TMDS_33 I/O standard. False path on all TMDS outputs.',tags:['xdc','sdc'],path:'interfaces/hdmi/',href:`${B}/tree/main/interfaces/hdmi`,kw:'hdmi tmds video pixel clock serdes'},
+  {type:'interface',title:'Ethernet — RGMII',desc:'DDR source-synchronous at 125 MHz. RX clock is primary, TX clock is generated. Both edges matter.',tags:['xdc','sdc'],path:'interfaces/ethernet/',href:`${B}/tree/main/interfaces/ethernet`,kw:'ethernet rgmii gigabit 125mhz ddr'},
+  {type:'interface',title:'MIPI CSI-2 RX',desc:'Camera interface for vision projects. D-PHY clock constraints, lane CDC, I2C sensor control path.',tags:['xdc','sdc'],path:'interfaces/mipi-csi2/',href:`${B}/tree/main/interfaces/mipi-csi2`,kw:'mipi csi2 camera dphy sensor imx ov'},
+  {type:'interface',title:'AXI4-Lite',desc:'Sync bus used by virtually every Xilinx IP. Async reset false path, multi-clock CDC, custom slave patterns.',tags:['xdc','sdc'],path:'interfaces/axi4-lite/',href:`${B}/tree/main/interfaces/axi4-lite`,kw:'axi axi4 lite amba bus reset cdc'},
+  {type:'interface',title:'I2S Audio',desc:'I2S serial audio. Master and slave modes. BCLK generated clock at 3 or 6 MHz from sys_clk MMCM.',tags:['xdc','sdc'],path:'interfaces/i2s/',href:`${B}/tree/main/interfaces/i2s`,kw:'i2s audio bclk lrclk mclk codec'},
+  {type:'interface',title:'Virtual Clock',desc:'Used when the reference clock lives on the PCB and never enters the FPGA. Covers system-synchronous I/O.',tags:['xdc','sdc'],path:'interfaces/virtual-clock/',href:`${B}/tree/main/interfaces/virtual-clock`,kw:'virtual clock system synchronous shared oscillator'},
+  {type:'pattern',title:'Clock Domain Crossing',desc:'set_clock_groups -asynchronous between independent domains. set_max_delay -datapath_only for handshakes.',tags:['xdc','sdc'],path:'timing-patterns/clock-domain-crossing/',href:`${B}/tree/main/timing-patterns/clock-domain-crossing`,kw:'cdc clock domain crossing async set_clock_groups'},
+  {type:'pattern',title:'Multicycle Path',desc:'Relax timing for paths that legitimately take multiple cycles. Always pair -setup N with -hold N-1.',tags:['xdc','sdc'],path:'timing-patterns/multicycle-path/',href:`${B}/tree/main/timing-patterns/multicycle-path`,kw:'multicycle path setup hold exception'},
+  {type:'pattern',title:'False Path',desc:'Async resets, buttons, LEDs, UART. False path vs set_clock_groups — when and how to use each.',tags:['xdc','sdc'],path:'timing-patterns/false-path/',href:`${B}/tree/main/timing-patterns/false-path`,kw:'false path async reset button uart false_path'},
+  {type:'pattern',title:'I/O Delay Patterns',desc:'System-sync vs source-sync. DDR delays on both edges. Deriving -max and -min from datasheet parameters.',tags:['xdc','sdc'],path:'timing-patterns/io-delays/',href:`${B}/tree/main/timing-patterns/io-delays`,kw:'set_input_delay set_output_delay io delays'},
+  {type:'board',title:'Basys 3',desc:'XC7A35T — 100 MHz — 16 switches, 16 LEDs, 4-digit 7-seg, 5 buttons, VGA, USB-UART, Pmod JA/JB',tags:['xdc'],path:'boards/xilinx/basys3/',href:`${B}/blob/main/boards/xilinx/basys3/basys3.xdc`,kw:'basys3 basys 3 artix digilent'},
+  {type:'board',title:'Arty A7-100T',desc:'XC7A100T — 100 MHz — 4 RGB LEDs, Gigabit Ethernet RGMII, 4 buttons, Pmod JA/JB',tags:['xdc'],path:'boards/xilinx/arty-a7-100t/',href:`${B}/blob/main/boards/xilinx/arty-a7-100t/arty-a7-100t.xdc`,kw:'arty a7 artix digilent ethernet'},
+  {type:'board',title:'Nexys A7-100T',desc:'XC7A100T — 100 MHz — 16 switches, 8-digit 7-seg, VGA, Ethernet, PDM mic, Pmod JA/JB/JC/JD',tags:['xdc'],path:'boards/xilinx/nexys-a7-100t/',href:`${B}/blob/main/boards/xilinx/nexys-a7-100t/nexys-a7-100t.xdc`,kw:'nexys a7 artix digilent university'},
+  {type:'board',title:'Zybo Z7-20',desc:'XC7Z020 Zynq — HDMI in/out, SSM2603 audio via I2S, USB-UART, 5× Pmod connectors',tags:['xdc'],path:'boards/xilinx/zybo-z7-20/',href:`${B}/blob/main/boards/xilinx/zybo-z7-20/zybo-z7-20.xdc`,kw:'zybo z7 zynq digilent hdmi audio'},
+  {type:'board',title:'PYNQ-Z2',desc:'XC7Z020 Zynq — 125 MHz — HDMI TX and RX, ADAU1761 audio codec, Pmod JA/JB',tags:['xdc'],path:'boards/xilinx/pynq-z2/',href:`${B}/blob/main/boards/xilinx/pynq-z2/pynq-z2.xdc`,kw:'pynq z2 zynq hdmi audio python'},
+  {type:'board',title:'Cmod A7-35T',desc:'XC7A35T — 12 MHz (not 100!) — DIP-48 breadboard form factor, 44 GPIO pins',tags:['xdc'],path:'boards/xilinx/cmod-a7-35t/',href:`${B}/blob/main/boards/xilinx/cmod-a7-35t/cmod-a7-35t.xdc`,kw:'cmod a7 artix dip breadboard'},
+  {type:'board',title:'ZCU104',desc:'XCZU7EV UltraScale+ — 300 MHz differential + 125 MHz single-ended. Most PL banks at 1.8V.',tags:['xdc'],path:'boards/xilinx/zcu104/',href:`${B}/blob/main/boards/xilinx/zcu104/zcu104.xdc`,kw:'zcu104 ultrascale zynq mpsoc 1.8v'},
+  {type:'board',title:'Alveo U50',desc:'XCU50 UltraScale+ — PCIe Gen3 x16, 8 GB HBM2 on-package, 2× QSFP28 100 GbE.',tags:['xdc'],path:'boards/xilinx/alveo-u50/',href:`${B}/blob/main/boards/xilinx/alveo-u50/alveo-u50.xdc`,kw:'alveo u50 ultrascale hbm pcie 100g data center ml'},
+  {type:'board',title:'DE10-Nano',desc:'Cyclone V SE SoC — 3× 50 MHz — HPS ARM Cortex-A9, Arduino header, GPIO expansion',tags:['qsf','sdc'],path:'boards/intel/de10-nano/',href:`${B}/tree/main/boards/intel/de10-nano`,kw:'de10 nano cyclone v terasic hps arm'},
+  {type:'board',title:'DE1-SoC',desc:'Cyclone V SoC — 4× 50 MHz — 10 LEDs, 6× 7-segment, HPS DDR3, Gigabit Ethernet',tags:['qsf','sdc'],path:'boards/intel/de1-soc/',href:`${B}/tree/main/boards/intel/de1-soc`,kw:'de1 soc cyclone v terasic hps'},
+  {type:'board',title:'iCE40-HX8K Breakout',desc:'iCE40HX8K — 12 MHz — 8 LEDs, USB-UART, SPI Flash, Pmod J1/J2. nextpnr + Yosys open source flow.',tags:['lpf'],path:'boards/lattice/ice40-hx8k/',href:`${B}/blob/main/boards/lattice/ice40-hx8k/ice40-hx8k.lpf`,kw:'ice40 hx8k lattice nextpnr yosys open source'},
+  {type:'board',title:'ULX3S — ECP5',desc:'ECP5 85k — 25 MHz — 32 MB SDRAM, HDMI GPDI, ESP32 WiFi, FT231X. Open hardware.',tags:['lpf'],path:'boards/lattice/ecp5/',href:`${B}/blob/main/boards/lattice/ecp5/ecp5.lpf`,kw:'ulx3s ecp5 lattice nextpnr hdmi sdram open hardware'},
+  {type:'board',title:'Tang Nano 9K',desc:'GW1NR-9C Gowin — 27 MHz — HDMI, HyperRAM, 6 LEDs. First open-source CST template anywhere.',tags:['cst','sdc'],path:'boards/gowin/tang-nano-9k/',href:`${B}/tree/main/boards/gowin/tang-nano-9k`,kw:'tang nano 9k gowin sipeed hdmi cheap budget'},
+];
+
+let activeFilter='all';
+
+function renderGrid(items){
+  const grid=document.getElementById('grid');
+  const countEl=document.getElementById('cardCount');
+  if(countEl) countEl.textContent=`${items.length} results`;
+  if(!items.length){
+    grid.innerHTML='<div class="no-results">No results — try a different search term.</div>';
+    return;
+  }
+  grid.innerHTML=items.map((item,i)=>`
+    <a class="card" href="${item.href}" target="_blank" rel="noopener" style="transition-delay:${(i%16)*25}ms">
+      <div class="card-top">
+        <span class="card-type">${item.type}</span>
+        <div class="card-tags">${item.tags.map(t=>`<span class="tag tag-${t}">.${t}</span>`).join('')}</div>
+      </div>
+      <div class="card-title">${item.title}</div>
+      <div class="card-desc">${item.desc}</div>
+      <div class="card-path">${item.path}</div>
+      <span class="card-arrow">↗</span>
+    </a>`).join('');
+
+  setTimeout(()=>{
+    const cardObs=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          e.target.classList.add('visible');
+          addTilt(e.target);
+          cardObs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.05,rootMargin:'0px 0px -20px 0px'});
+    document.querySelectorAll('.card').forEach(c=>cardObs.observe(c));
+  },50);
+}
+
+function filterCards(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  renderGrid(ITEMS.filter(item=>{
+    const mf=activeFilter==='all'||item.type===activeFilter||
+      (activeFilter==='xdc'&&item.tags.includes('xdc'))||
+      (activeFilter==='sdc'&&item.tags.includes('sdc'));
+    const ms=!q||[item.title,item.desc,item.kw,item.path].join(' ').toLowerCase().includes(q);
+    return mf&&ms;
+  }));
+}
+
+function setFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.filter').forEach(b=>{
+    b.classList.toggle('active',
+      f==='all'?b.textContent==='All':
+      f==='interface'?b.textContent==='Interfaces':
+      f==='board'?b.textContent==='Boards':
+      f==='pattern'?b.textContent==='Timing Patterns':
+      b.textContent.toUpperCase()===f.toUpperCase()
+    );
+  });
+  filterCards();
+}
+
+renderGrid(ITEMS);
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# ---
+# I2C CONSTRAINTS  —  Lattice nextpnr (.lpf)
+# ---
+#
+# For iCE40 and ECP5 targets using nextpnr.
+# I2C is asynchronous/open-drain — no timing constraint needed.
+# Only pin location and I/O standard are required.
+#
+# Replace PIN_XXX with actual pin names from your board's datasheet or LPF.
+# iCE40 pins use names like: B6, D5, etc.
+# ECP5 pins use names like:  A2, B3, etc.
+#
+# Reference: nextpnr-ice40 and nextpnr-ecp5 documentation
+# ---
+
+# I2C SCL — open-drain, pull-up required externally
+LOCATE COMP "i2c_scl" SITE "PIN_XX";
+IOBUF PORT "i2c_scl" IO_TYPE=LVCMOS33;
+
+# I2C SDA — open-drain bidirectional, pull-up required externally
+LOCATE COMP "i2c_sda" SITE "PIN_XX";
+IOBUF PORT "i2c_sda" IO_TYPE=LVCMOS33;
+
+# Lattice LPF does not have a set_false_path equivalent.
+# No timing constraint is applied — this is correct for I2C.
+# nextpnr will not attempt to time unconstrained I/O paths.

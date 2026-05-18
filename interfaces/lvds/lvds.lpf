@@ -1,0 +1,71 @@
+# ---
+# LVDS SOURCE-SYNCHRONOUS INPUT CONSTRAINTS  —  Lattice nextpnr (.lpf)
+# ---
+#
+# LVDS on Lattice iCE40:
+#   iCE40 does NOT have true LVDS I/O buffers. It can receive LVDS signals
+#   using a differential pair with external termination, but lacks on-chip
+#   LVDS input buffers. Use with caution on iCE40.
+#
+# LVDS on Lattice ECP5:
+#   ECP5 has full LVDS support (LVDS25 I/O type). Differential pairs are
+#   supported in dedicated I/O blocks. This template targets ECP5.
+#
+# For source-synchronous LVDS: the incoming clock must be declared using
+# FREQUENCY on the clock port. nextpnr will time capture logic accordingly.
+#
+# Reference: nextpnr-ecp5 documentation
+# ---
+
+
+# ---
+# LVDS incoming clock (source-synchronous — from external device)
+# ---
+
+# Clock P-side — constrain with FREQUENCY matching the source device's clock rate
+LOCATE COMP "lvds_clk_p" SITE "PIN_XX";
+IOBUF PORT "lvds_clk_p" IO_TYPE=LVDS25;
+FREQUENCY PORT "lvds_clk_p" 100.00 MHz;  ;# Replace with actual source clock rate
+
+# Clock N-side — must be in same differential pair bank, no FREQUENCY needed
+LOCATE COMP "lvds_clk_n" SITE "PIN_XX";
+IOBUF PORT "lvds_clk_n" IO_TYPE=LVDS25;
+
+
+# ---
+# LVDS data pairs
+# ---
+# Replace PIN_XX with actual sites from your ECP5 board.
+# P and N pins must be adjacent differential-pair-capable pins.
+
+LOCATE COMP "lvds_data_p[0]" SITE "PIN_XX";
+LOCATE COMP "lvds_data_n[0]" SITE "PIN_XX";
+IOBUF PORT "lvds_data_p[0]" IO_TYPE=LVDS25;
+IOBUF PORT "lvds_data_n[0]" IO_TYPE=LVDS25;
+
+LOCATE COMP "lvds_data_p[1]" SITE "PIN_XX";
+LOCATE COMP "lvds_data_n[1]" SITE "PIN_XX";
+IOBUF PORT "lvds_data_p[1]" IO_TYPE=LVDS25;
+IOBUF PORT "lvds_data_n[1]" IO_TYPE=LVDS25;
+
+LOCATE COMP "lvds_data_p[2]" SITE "PIN_XX";
+LOCATE COMP "lvds_data_n[2]" SITE "PIN_XX";
+IOBUF PORT "lvds_data_p[2]" IO_TYPE=LVDS25;
+IOBUF PORT "lvds_data_n[2]" IO_TYPE=LVDS25;
+
+LOCATE COMP "lvds_data_p[3]" SITE "PIN_XX";
+LOCATE COMP "lvds_data_n[3]" SITE "PIN_XX";
+IOBUF PORT "lvds_data_p[3]" IO_TYPE=LVDS25;
+IOBUF PORT "lvds_data_n[3]" IO_TYPE=LVDS25;
+
+
+# ---
+# Internal termination (ECP5 supports on-chip differential termination)
+# ---
+# Add TERMINATION=ON to enable 100-ohm on-chip differential termination.
+# Saves an external resistor on the PCB.
+# IOBUF PORT "lvds_clk_p"    IO_TYPE=LVDS25 TERMINATION=ON;
+# IOBUF PORT "lvds_data_p[*]" IO_TYPE=LVDS25 TERMINATION=ON;
+
+# nextpnr does not support set_input_delay for source-synchronous I/O.
+# Verify board-level timing manually using the FREQUENCY target and timing report.

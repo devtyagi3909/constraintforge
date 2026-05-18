@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPGA Timing Budget Calculator</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2d3248;
+    --accent: #4f9eff;
+    --accent2: #7c5cfc;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; gap: 16px; }
+  .logo { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  header h1 { font-size: 20px; font-weight: 600; }
+  header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .badge { margin-left: auto; background: rgba(79,158,255,0.15); color: var(--accent); border: 1px solid rgba(79,158,255,0.3); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+
+  .layout { display: grid; grid-template-columns: 380px 1fr; gap: 0; min-height: calc(100vh - 77px); }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px; overflow-y: auto; }
+  .sidebar h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  .mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 24px; background: var(--surface2); border-radius: 8px; padding: 4px; }
+  .tab { padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--muted); transition: all .15s; border: none; background: none; width: 100%; }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  label span { color: var(--accent); font-family: var(--mono); font-size: 11px; margin-left: 4px; }
+  input, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 9px 12px; font-size: 13px; outline: none; transition: border-color .15s; }
+  input:focus, select:focus { border-color: var(--accent); }
+  input[type=range] { padding: 4px 0; background: none; border: none; cursor: pointer; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .preset-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .preset { font-size: 11px; padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 20px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .preset:hover { border-color: var(--accent); color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .calc-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 8px; }
+  .calc-btn:hover { opacity: 0.9; }
+
+  .main { padding: 24px 32px; overflow-y: auto; }
+  .main h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .result-card.pass { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
+  .result-card.fail { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+  .result-card.warn { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+  .result-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .result-value { font-size: 22px; font-weight: 700; font-family: var(--mono); }
+  .result-value.pass { color: var(--green); }
+  .result-value.fail { color: var(--red); }
+  .result-value.warn { color: var(--yellow); }
+  .result-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .timeline { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .timeline-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+  .tl-wrap { position: relative; height: 80px; }
+  .tl-bar { position: absolute; top: 28px; left: 0; right: 0; height: 4px; background: var(--border); border-radius: 2px; }
+  .tl-seg { position: absolute; top: 28px; height: 4px; border-radius: 2px; }
+  .tl-tick { position: absolute; top: 12px; width: 1px; background: var(--muted); height: 40px; opacity: 0.4; }
+  .tl-label { position: absolute; font-size: 10px; color: var(--muted); font-family: var(--mono); transform: translateX(-50%); }
+  .tl-label.top { top: 0; }
+  .tl-label.bot { top: 58px; }
+  .tl-seg-label { position: absolute; top: 40px; font-size: 10px; font-family: var(--mono); transform: translateX(-50%); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .leg-dot { width: 10px; height: 4px; border-radius: 2px; }
+
+  .code-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .code-title { font-size: 12px; font-weight: 600; }
+  .copy-btn { font-size: 11px; padding: 4px 10px; background: var(--border); border: none; color: var(--text); border-radius: 4px; cursor: pointer; transition: background .15s; }
+  .copy-btn:hover { background: var(--accent); }
+  pre { padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 1.7; overflow-x: auto; white-space: pre-wrap; }
+  .c-kw { color: #c792ea; }
+  .c-fn { color: var(--accent); }
+  .c-str { color: #c3e88d; }
+  .c-num { color: #f78c6c; }
+  .c-cm { color: #546e7a; font-style: italic; }
+
+  .tips { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .tips h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .tip { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .tip-icon { flex-shrink: 0; margin-top: 1px; }
+
+  .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; gap: 12px; color: var(--muted); }
+  .empty-icon { font-size: 48px; opacity: 0.3; }
+  .empty h3 { font-size: 16px; color: var(--text); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚡</div>
+  <div>
+    <h1>FPGA Timing Budget Calculator</h1>
+    <p>Paste datasheet values → get correct set_input_delay / set_output_delay constraints</p>
+  </div>
+  <div class="badge">fpga-constraint-library</div>
+</header>
+
+<div class="layout">
+<div class="sidebar">
+  <h2>Interface Type</h2>
+  <div class="mode-tabs">
+    <button class="tab active" onclick="setMode('input')">Input Delay</button>
+    <button class="tab" onclick="setMode('output')">Output Delay</button>
+  </div>
+
+  <h2>Quick Presets</h2>
+  <div class="preset-bar" id="presets"></div>
+
+  <h2>Clock Parameters</h2>
+  <div class="field">
+    <label>Clock Frequency (MHz) <span>→ period auto-calculated</span></label>
+    <input type="number" id="clk_freq" value="100" min="0.001" step="any" oninput="syncFreqPeriod('freq')">
+  </div>
+  <div class="field">
+    <label>Clock Period (ns)</label>
+    <input type="number" id="clk_period" value="10" min="0.001" step="any" oninput="syncFreqPeriod('period')">
+  </div>
+  <div class="field">
+    <label>Clock Name <span>used in generated code</span></label>
+    <input type="text" id="clk_name" value="sys_clk" placeholder="e.g. sys_clk, spi_sclk">
+  </div>
+  <div class="field">
+    <label>Port / Signal Name</label>
+    <input type="text" id="port_name" value="data[*]" placeholder="e.g. data[*], adc_out">
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="input_params">
+    <h2>Datasheet Parameters (Input)</h2>
+    <div class="field">
+      <label>t<sub>CO_max</sub> — Max output delay from clock edge (ns) <span>worst case</span></label>
+      <input type="number" id="tco_max" value="7" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>t<sub>CO_min</sub> — Min output delay from clock edge (ns) <span>best case</span></label>
+      <input type="number" id="tco_min" value="2" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>PCB Trace Delay (ns) <span>~60 ps per cm of FR4</span></label>
+      <input type="number" id="trace_delay" value="0" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>Clock Skew (ns) <span>board-level clock distribution mismatch</span></label>
+      <input type="number" id="clk_skew" value="0" min="0" step="0.1">
+    </div>
+  </div>
+
+  <div id="output_params" style="display:none">
+    <h2>Datasheet Parameters (Output)</h2>
+    <div class="field">
+      <label>t<sub>SU</sub> — Setup time at destination (ns) <span>data must be valid BEFORE clock</span></label>
+      <input type="number" id="tsu" value="5" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>t<sub>H</sub> — Hold time at destination (ns) <span>data must remain valid AFTER clock</span></label>
+      <input type="number" id="th" value="2" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>PCB Trace Delay (ns)</label>
+      <input type="number" id="trace_delay_out" value="0" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>Clock Skew (ns)</label>
+      <input type="number" id="clk_skew_out" value="0" min="0" step="0.1">
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h2>Toolchain</h2>
+  <div class="field">
+    <select id="toolchain">
+      <option value="vivado">Xilinx Vivado (.xdc)</option>
+      <option value="quartus">Intel Quartus (.sdc)</option>
+      <option value="both">Both formats</option>
+    </select>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">⚡ Calculate Constraints</button>
+</div>
+
+<div class="main" id="results">
+  <div class="empty">
+    <div class="empty-icon">📐</div>
+    <h3>Enter parameters and click Calculate</h3>
+    <p>Paste in values from your peripheral's datasheet.<br>The calculator generates the exact constraint lines.</p>
+  </div>
+</div>
+</div>
+
+<script>
+const PRESETS = {
+  input: [
+    { name: 'SPI Slave', tco_max: 8, tco_min: 1, trace: 0.3, skew: 0, freq: 25, port: 'spi_miso', clk: 'spi_sclk' },
+    { name: 'LVDS ADC', tco_max: 2, tco_min: 0.5, trace: 0.5, skew: 0.1, freq: 100, port: 'adc_data[*]', clk: 'adc_clk' },
+    { name: 'SRAM', tco_max: 10, tco_min: 2, trace: 1.0, skew: 0.2, freq: 50, port: 'sram_dq[*]', clk: 'sys_clk' },
+    { name: 'RGMII RX', tco_max: 1.5, tco_min: 1.0, trace: 0.2, skew: 0, freq: 125, port: 'eth_rxd[*]', clk: 'eth_rxclk' },
+    { name: 'I2C', tco_max: 1000, tco_min: 0, trace: 2, skew: 0, freq: 0.4, port: 'i2c_sda', clk: 'virt_sys_clk' },
+  ],
+  output: [
+    { name: 'SPI Master', tsu: 5, th: 2, trace: 0.3, skew: 0, freq: 25, port: 'spi_mosi', clk: 'spi_sclk_gen' },
+    { name: 'DAC Output', tsu: 3, th: 1, trace: 0.5, skew: 0, freq: 100, port: 'dac_data[*]', clk: 'sys_clk' },
+    { name: 'RGMII TX', tsu: 1.0, th: 1.0, trace: 0.2, skew: 0, freq: 125, port: 'eth_txd[*]', clk: 'eth_gtxclk' },
+    { name: 'LCD', tsu: 8, th: 2, trace: 1.0, skew: 0, freq: 20, port: 'lcd_data[*]', clk: 'sys_clk' },
+  ]
+};
+
+let mode = 'input';
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&m==='input')||(i===1&&m==='output')));
+  document.getElementById('input_params').style.display = m==='input' ? '' : 'none';
+  document.getElementById('output_params').style.display = m==='output' ? '' : 'none';
+  renderPresets();
+  document.getElementById('results').innerHTML = `<div class="empty"><div class="empty-icon">📐</div><h3>Enter parameters and click Calculate</h3><p>Paste in values from your peripheral's datasheet.</p></div>`;
+}
+
+function renderPresets() {
+  const bar = document.getElementById('presets');
+  bar.innerHTML = '';
+  PRESETS[mode].forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset';
+    btn.textContent = p.name;
+    btn.onclick = () => applyPreset(p);
+    bar.appendChild(btn);
+  });
+}
+
+function applyPreset(p) {
+  document.getElementById('clk_freq').value = p.freq;
+  document.getElementById('clk_period').value = (1000/p.freq).toFixed(3);
+  document.getElementById('clk_name').value = p.clk;
+  document.getElementById('port_name').value = p.port;
+  if (mode === 'input') {
+    document.getElementById('tco_max').value = p.tco_max;
+    document.getElementById('tco_min').value = p.tco_min;
+    document.getElementById('trace_delay').value = p.trace;
+    document.getElementById('clk_skew').value = p.skew;
+  } else {
+    document.getElementById('tsu').value = p.tsu;
+    document.getElementById('th').value = p.th;
+    document.getElementById('trace_delay_out').value = p.trace;
+    document.getElementById('clk_skew_out').value = p.skew;
+  }
+  calculate();
+}
+
+function syncFreqPeriod(src) {
+  if (src === 'freq') {
+    const f = parseFloat(document.getElementById('clk_freq').value);
+    if (f > 0) document.getElementById('clk_period').value = (1000/f).toFixed(6);
+  } else {
+    const p = parseFloat(document.getElementById('clk_period').value);
+    if (p > 0) document.getElementById('clk_freq').value = (1000/p).toFixed(4);
+  }
+}
+
+function fmt(n) { return Number(n).toFixed(3); }
+
+function slackClass(s) { return s > 1 ? 'pass' : s > 0 ? 'warn' : 'fail'; }
+function slackIcon(s) { return s > 1 ? '✅' : s > 0 ? '⚠️' : '❌'; }
+
+function calculate() {
+  const period    = parseFloat(document.getElementById('clk_period').value);
+  const clkName   = document.getElementById('clk_name').value.trim() || 'sys_clk';
+  const portName  = document.getElementById('port_name').value.trim() || 'data[*]';
+  const toolchain = document.getElementById('toolchain').value;
+
+  let results, code;
+
+  if (mode === 'input') {
+    const tco_max    = parseFloat(document.getElementById('tco_max').value);
+    const tco_min    = parseFloat(document.getElementById('tco_min').value);
+    const trace      = parseFloat(document.getElementById('trace_delay').value) || 0;
+    const skew       = parseFloat(document.getElementById('clk_skew').value) || 0;
+
+    const delay_max  = tco_max + trace + skew;
+    const delay_min  = tco_min - trace;
+    const margin_su  = period - delay_max;
+    const margin_hld = delay_min;
+    const pct        = Math.min(100, Math.max(0, (delay_max / period) * 100));
+
+    results = { delay_max, delay_min, margin_su, margin_hld, period, pct, tco_max, tco_min, trace, skew };
+
+    const codeLines = buildInputCode(clkName, portName, delay_max, delay_min, toolchain);
+    code = codeLines;
+
+    renderInput(results, code, clkName, portName, toolchain);
+
+  } else {
+    const tsu        = parseFloat(document.getElementById('tsu').value);
+    const th         = parseFloat(document.getElementById('th').value);
+    const trace      = parseFloat(document.getElementById('trace_delay_out').value) || 0;
+    const skew       = parseFloat(document.getElementById('clk_skew_out').value) || 0;
+
+    const delay_max  = tsu + trace + skew;
+    const delay_min  = -(th - trace);
+    const margin_su  = period - delay_max;
+    const margin_hld = -delay_min;
+    const pct        = Math.min(100, Math.max(0, (delay_max / period) * 100));
+
+    results = { delay_max, delay_min, margin_su, margin_hld, period, pct, tsu, th, trace, skew };
+
+    const code = buildOutputCode(clkName, portName, delay_max, delay_min, toolchain);
+    renderOutput(results, code, clkName, portName, toolchain);
+  }
+}
+
+function buildInputCode(clk, port, dmax, dmin, tc) {
+  const xdc = `<span class="c-cm"># set_input_delay — generated by FPGA Timing Budget Calculator</span>
+<span class="c-fn">set_input_delay</span> <span class="c-kw">-clock</span> ${clk} <span class="c-kw">-max</span> <span class="c-num">${fmt(dmax)}</span> [<span class="c-fn">get_ports</span> {${port}}]
+<span class="c-fn">set_input_delay</span> <span class="c-kw">-clock</span> ${clk} <span class="c-kw">-min</span> <span class="c-num">${fmt(dmin)}</span> [<span class="c-fn">get_ports</span> {${port}}]`;
+
+  const sdc = `<span class="c-cm"># set_input_delay — generated by FPGA Timing Budget Calculator</span>
+<span class="c-fn">set_input_delay</span> <span class="c-kw">-clock</span> {${clk}} <span class="c-kw">-max</span> <span class="c-num">${fmt(dmax)}</span> [<span class="c-fn">get_ports</span> {${port}}]
+<span class="c-fn">set_input_delay</span> <span class="c-kw">-clock</span> {${clk}} <span class="c-kw">-min</span> <span class="c-num">${fmt(dmin)}</span> [<span class="c-fn">get_ports</span> {${port}}]`;
+
+  const plain_xdc = `set_input_delay -clock ${clk} -max ${fmt(dmax)} [get_ports {${port}}]\nset_input_delay -clock ${clk} -min ${fmt(dmin)} [get_ports {${port}}]`;
+  const plain_sdc = `set_input_delay -clock {${clk}} -max ${fmt(dmax)} [get_ports {${port}}]\nset_input_delay -clock {${clk}} -min ${fmt(dmin)} [get_ports {${port}}]`;
+
+  return { xdc, sdc, plain_xdc, plain_sdc };
+}
+
+function buildOutputCode(clk, port, dmax, dmin, tc) {
+  const xdc = `<span class="c-cm"># set_output_delay — generated by FPGA Timing Budget Calculator</span>
+<span class="c-fn">set_output_delay</span> <span class="c-kw">-clock</span> ${clk} <span class="c-kw">-max</span>  <span class="c-num">${fmt(dmax)}</span> [<span class="c-fn">get_ports</span> {${port}}]
+<span class="c-fn">set_output_delay</span> <span class="c-kw">-clock</span> ${clk} <span class="c-kw">-min</span> <span class="c-num">${fmt(dmin)}</span> [<span class="c-fn">get_ports</span> {${port}}]`;
+
+  const sdc = `<span class="c-cm"># set_output_delay — generated by FPGA Timing Budget Calculator</span>
+<span class="c-fn">set_output_delay</span> <span class="c-kw">-clock</span> {${clk}} <span class="c-kw">-max</span>  <span class="c-num">${fmt(dmax)}</span> [<span class="c-fn">get_ports</span> {${port}}]
+<span class="c-fn">set_output_delay</span> <span class="c-kw">-clock</span> {${clk}} <span class="c-kw">-min</span> <span class="c-num">${fmt(dmin)}</span> [<span class="c-fn">get_ports</span> {${port}}]`;
+
+  const plain_xdc = `set_output_delay -clock ${clk} -max  ${fmt(dmax)} [get_ports {${port}}]\nset_output_delay -clock ${clk} -min ${fmt(dmin)} [get_ports {${port}}]`;
+  const plain_sdc = `set_output_delay -clock {${clk}} -max  ${fmt(dmax)} [get_ports {${port}}]\nset_output_delay -clock {${clk}} -min ${fmt(dmin)} [get_ports {${port}}]`;
+
+  return { xdc, sdc, plain_xdc, plain_sdc };
+}
+
+function timelineHTML(period, used, dmax, dmin) {
+  const W = 100;
+  const usedPct = Math.min(99, (Math.max(0, dmax) / period) * W);
+  const marginPct = Math.max(0, ((period - Math.max(0,dmax)) / period) * W);
+  const ok = dmax < period;
+
+  return `
+    <div class="tl-bar"></div>
+    <div class="tl-seg" style="left:0%;width:${usedPct}%;background:${ok?'#4f9eff':'#ef4444'};"></div>
+    <div class="tl-seg" style="left:${usedPct}%;width:${marginPct}%;background:#22c55e;opacity:0.6;"></div>
+    <div class="tl-tick" style="left:0%"></div>
+    <div class="tl-tick" style="left:${usedPct}%"></div>
+    <div class="tl-tick" style="left:100%"></div>
+    <div class="tl-label top" style="left:0%">0 ns</div>
+    <div class="tl-label top" style="left:${usedPct}%">${fmt(dmax)} ns</div>
+    <div class="tl-label top" style="left:100%">${fmt(period)} ns</div>
+    <div class="tl-seg-label" style="left:${usedPct/2}%;color:#4f9eff;">delay</div>
+    <div class="tl-seg-label" style="left:${usedPct + marginPct/2}%;color:#22c55e;">slack</div>
+  `;
+}
+
+function renderInput(r, code, clk, port, tc) {
+  const sc = slackClass(r.margin_su);
+  const el = document.getElementById('results');
+  el.innerHTML = `
+    <h2>Results — Input Delay</h2>
+    <div class="result-grid">
+      <div class="result-card ${sc}">
+        <div class="result-label">set_input_delay -max</div>
+        <div class="result-value ${sc}">${fmt(r.delay_max)} ns</div>
+        <div class="result-sub">tCO_max (${fmt(r.tco_max)}) + trace (${fmt(r.trace)}) + skew (${fmt(r.skew)})</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">set_input_delay -min</div>
+        <div class="result-value" style="color:var(--accent)">${fmt(r.delay_min)} ns</div>
+        <div class="result-sub">tCO_min (${fmt(r.tco_min)}) − trace (${fmt(r.trace)})</div>
+      </div>
+      <div class="result-card ${sc}">
+        <div class="result-label">${slackIcon(r.margin_su)} Setup Slack</div>
+        <div class="result-value ${sc}">${fmt(r.margin_su)} ns</div>
+        <div class="result-sub">period (${fmt(r.period)}) − delay_max (${fmt(r.delay_max)})</div>
+      </div>
+      <div class="result-card ${slackClass(r.margin_hld)}">
+        <div class="result-label">${slackIcon(r.margin_hld)} Hold Slack</div>
+        <div class="result-value ${slackClass(r.margin_hld)}">${fmt(r.margin_hld)} ns</div>
+        <div class="result-sub">delay_min — must be ≥ 0 for hold safety</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-title">Clock Period Utilization — ${fmt(r.pct)}% used by external delay</div>
+      <div class="tl-wrap">${timelineHTML(r.period, r.delay_max, r.delay_max, r.delay_min)}</div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#4f9eff"></div>External delay (tCO + trace + skew)</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#22c55e"></div>Available for FPGA internal logic</div>
+      </div>
+    </div>
+
+    ${buildCodeBlock(code, tc)}
+    ${tipsHTML_input(r)}
+  `;
+}
+
+function renderOutput(r, code, clk, port, tc) {
+  const sc = slackClass(r.margin_su);
+  const el = document.getElementById('results');
+  el.innerHTML = `
+    <h2>Results — Output Delay</h2>
+    <div class="result-grid">
+      <div class="result-card ${sc}">
+        <div class="result-label">set_output_delay -max</div>
+        <div class="result-value ${sc}">${fmt(r.delay_max)} ns</div>
+        <div class="result-sub">tSU (${fmt(r.tsu)}) + trace (${fmt(r.trace)}) + skew (${fmt(r.skew)})</div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">set_output_delay -min</div>
+        <div class="result-value" style="color:var(--accent)">${fmt(r.delay_min)} ns</div>
+        <div class="result-sub">−(tH (${fmt(r.th)}) − trace (${fmt(r.trace)}))</div>
+      </div>
+      <div class="result-card ${sc}">
+        <div class="result-label">${slackIcon(r.margin_su)} Setup Margin</div>
+        <div class="result-value ${sc}">${fmt(r.margin_su)} ns</div>
+        <div class="result-sub">period (${fmt(r.period)}) − delay_max (${fmt(r.delay_max)})</div>
+      </div>
+      <div class="result-card ${slackClass(r.margin_hld)}">
+        <div class="result-label">${slackIcon(r.margin_hld)} Hold Margin</div>
+        <div class="result-value ${slackClass(r.margin_hld)}">${fmt(r.margin_hld)} ns</div>
+        <div class="result-sub">delay_min magnitude — must be ≥ 0</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-title">Clock Period Utilization — ${fmt(r.pct)}% consumed by output requirement</div>
+      <div class="tl-wrap">${timelineHTML(r.period, r.delay_max, r.delay_max, r.delay_min)}</div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#4f9eff"></div>Output delay budget (tSU + trace + skew)</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#22c55e"></div>Available for FPGA internal logic</div>
+      </div>
+    </div>
+
+    ${buildCodeBlock(code, tc)}
+    ${tipsHTML_output(r)}
+  `;
+}
+
+function buildCodeBlock(code, tc) {
+  let blocks = '';
+  if (tc === 'vivado' || tc === 'both') {
+    blocks += `<div class="code-block">
+      <div class="code-header">
+        <div class="code-title">Vivado XDC</div>
+        <button class="copy-btn" onclick="copyCode('xdc')">Copy</button>
+      </div>
+      <pre id="xdc_code">${code.xdc}</pre>
+    </div>`;
+  }
+  if (tc === 'quartus' || tc === 'both') {
+    blocks += `<div class="code-block">
+      <div class="code-header">
+        <div class="code-title">Quartus SDC</div>
+        <button class="copy-btn" onclick="copyCode('sdc')">Copy</button>
+      </div>
+      <pre id="sdc_code">${code.sdc}</pre>
+    </div>`;
+  }
+
+  window._plainXdc = code.plain_xdc || '';
+  window._plainSdc = code.plain_sdc || '';
+  return blocks;
+}
+
+function copyCode(type) {
+  const text = type === 'xdc' ? window._plainXdc : window._plainSdc;
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll('.copy-btn');
+    btns.forEach(b => { if (b.onclick.toString().includes(type)) { b.textContent = 'Copied!'; setTimeout(()=>b.textContent='Copy',1500); }});
+  });
+}
+
+function tipsHTML_input(r) {
+  const tips = [];
+  if (r.margin_su < 0) tips.push({ icon:'❌', text:`<strong>Timing violation:</strong> Your external delay (${fmt(r.delay_max)} ns) exceeds the clock period (${fmt(r.period)} ns). Options: lower the clock frequency, reduce PCB trace length, or use IDELAY to center the sampling point.` });
+  else if (r.margin_su < 1) tips.push({ icon:'⚠️', text:`<strong>Tight margin:</strong> Only ${fmt(r.margin_su)} ns slack for FPGA internal logic. Consider using IDELAYE2/IDELAYE3 primitives to add programmable delay and center the capture window.` });
+  if (r.margin_hld < 0) tips.push({ icon:'❌', text:`<strong>Hold violation:</strong> delay_min (${fmt(r.delay_min)} ns) is negative — data disappears too quickly after the clock edge. Add trace length to the data path or use IDELAY with a positive offset.` });
+  if (r.trace > 1.5) tips.push({ icon:'💡', text:`PCB trace delay of ${fmt(r.trace)} ns = ~${Math.round(r.trace/0.06)} cm of FR4. Consider shortening the trace or using a higher layer (lower dielectric constant).` });
+  tips.push({ icon:'📖', text:`These values go directly into your .xdc or .sdc file. Vivado will use them to check that your design's routing leaves enough margin for the external interface to work.` });
+
+  return `<div class="tips"><h3>💡 Analysis &amp; Recommendations</h3>${tips.map(t=>`<div class="tip"><span class="tip-icon">${t.icon}</span><span>${t.text}</span></div>`).join('')}</div>`;
+}
+
+function tipsHTML_output(r) {
+  const tips = [];
+  if (r.margin_su < 0) tips.push({ icon:'❌', text:`<strong>Timing violation:</strong> Output delay requirement (${fmt(r.delay_max)} ns) exceeds period (${fmt(r.period)} ns). Lower the interface clock rate or add a pipeline register to the output path.` });
+  else if (r.margin_su < 1) tips.push({ icon:'⚠️', text:`<strong>Tight margin:</strong> Only ${fmt(r.margin_su)} ns left for FPGA output routing. Use FAST slew rate and add output register close to the I/O bank.` });
+  if (r.delay_min > 0) tips.push({ icon:'⚠️', text:`<strong>Positive -min:</strong> Output delay -min is ${fmt(r.delay_min)} ns. Vivado will add hold check margin. This is fine unless it's larger than the clock period.` });
+  tips.push({ icon:'📖', text:`set_output_delay -max = tSU tells Vivado how much of the period is consumed by the external setup requirement. The remaining slack is what your FPGA internal routing has available.` });
+  return `<div class="tips"><h3>💡 Analysis &amp; Recommendations</h3>${tips.map(t=>`<div class="tip"><span class="tip-icon">${t.icon}</span><span>${t.text}</span></div>`).join('')}</div>`;
+}
+
+// Init
+renderPresets();
+</script>
+</body>
+</html>

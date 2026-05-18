@@ -1,0 +1,197 @@
+name: Validate Constraints
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: Validate XDC files with Python validator
+  # ─────────────────────────────────────────────────────────────────────────
+  validate-xdc:
+    name: Validate XDC (Vivado) Constraints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run XDC validator
+        run: |
+          python3 scripts/validate_xdc.py --all --root .
+        # Exit code 0 = pass, 1 = warnings (allowed), 2 = errors (fail)
+        # Warnings are allowed in CI — they're informational
+        continue-on-error: false
+
+      - name: Print XDC summary
+        if: always()
+        run: |
+          echo "XDC files found:"
+          find . -name "*.xdc" -not -path "./.git/*" | sort
+          echo ""
+          echo "Total: $(find . -name '*.xdc' -not -path './.git/*' | wc -l) files"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: Validate SDC files with Tcl validator
+  # ─────────────────────────────────────────────────────────────────────────
+  validate-sdc:
+    name: Validate SDC (Quartus) Constraints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Tcl
+        run: sudo apt-get install -y tcl
+
+      - name: Run SDC validator
+        run: |
+          tclsh scripts/validate_sdc.tcl --all
+
+      - name: Print SDC summary
+        if: always()
+        run: |
+          echo "SDC files found:"
+          find . -name "*.sdc" -not -path "./.git/*" | sort
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3: Validate LPF files (basic checks)
+  # ─────────────────────────────────────────────────────────────────────────
+  validate-lpf:
+    name: Validate LPF (Lattice) Constraints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check LPF files for placeholders
+        run: |
+          ERRORS=0
+          for lpf in $(find . -name "*.lpf" -not -path "./.git/*"); do
+            echo "Checking $lpf ..."
+            if grep -nE '<[A-Z0-9_]+>' "$lpf"; then
+              echo "ERROR: Unfilled placeholders in $lpf"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ $ERRORS -gt 0 ]; then
+            echo ""
+            echo "❌ Found $ERRORS LPF file(s) with errors"
+            exit 1
+          fi
+          echo "✅ All LPF files passed"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 4: Repo structure checks
+  # ─────────────────────────────────────────────────────────────────────────
+  structure-check:
+    name: Repository Structure Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required top-level files exist
+        run: |
+          MISSING=0
+          for f in README.md LICENSE CONTRIBUTING.md; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing required file: $f"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ $f"
+            fi
+          done
+          [ $MISSING -eq 0 ] || exit 1
+
+      - name: Check required directories exist
+        run: |
+          MISSING=0
+          REQUIRED_DIRS=(
+            "interfaces/clocks"
+            "interfaces/uart"
+            "interfaces/spi"
+            "interfaces/i2c"
+            "interfaces/ddr3"
+            "interfaces/lvds"
+            "timing-patterns/clock-domain-crossing"
+            "timing-patterns/multicycle-path"
+            "timing-patterns/false-path"
+            "timing-patterns/io-delays"
+            "boards/xilinx"
+            "boards/intel"
+            "boards/lattice"
+            "scripts"
+          )
+          for dir in "${REQUIRED_DIRS[@]}"; do
+            if [ ! -d "$dir" ]; then
+              echo "❌ Missing required directory: $dir"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ $dir/"
+            fi
+          done
+          [ $MISSING -eq 0 ] || exit 1
+
+      - name: Check each interface has at least one constraint file
+        run: |
+          EMPTY=0
+          for iface_dir in interfaces/*/; do
+            count=$(find "$iface_dir" -name "*.xdc" -o -name "*.sdc" -o -name "*.lpf" | wc -l)
+            if [ "$count" -eq 0 ]; then
+              echo "⚠ No constraint files in $iface_dir"
+              EMPTY=$((EMPTY + 1))
+            else
+              echo "✅ $iface_dir ($count file(s))"
+            fi
+          done
+          # Empty interface dirs are warnings, not failures
+          exit 0
+
+      - name: Check each board has at least one constraint file
+        run: |
+          for board_dir in boards/*/*/; do
+            count=$(find "$board_dir" -name "*.xdc" -o -name "*.qsf" -o -name "*.lpf" | wc -l)
+            if [ "$count" -eq 0 ]; then
+              echo "⚠ No constraint files in $board_dir"
+            else
+              echo "✅ $board_dir ($count file(s))"
+            fi
+          done
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 5: Link checker — ensure all links in README are valid
+  # ─────────────────────────────────────────────────────────────────────────
+  check-links:
+    name: Check README Links
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check internal file links in README
+        run: |
+          BROKEN=0
+          # Extract markdown links: [text](path)
+          grep -oE '\(([^)]+)\)' README.md | tr -d '()' | grep -v '^http' | while read link; do
+            # Remove anchors
+            file_path="${link%%#*}"
+            if [ -n "$file_path" ] && [ ! -e "$file_path" ]; then
+              echo "❌ Broken link in README.md: $file_path"
+              BROKEN=$((BROKEN + 1))
+            fi
+          done
+          echo "Link check complete."

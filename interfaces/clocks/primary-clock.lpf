@@ -1,0 +1,86 @@
+# ---
+# PRIMARY CLOCK CONSTRAINTS  —  Lattice nextpnr (.lpf)
+# ---
+#
+# In nextpnr-ice40 and nextpnr-ecp5, clock constraints are declared using
+# the FREQUENCY directive on the clock port in the LPF file.
+#
+# nextpnr uses this frequency as its timing target — it will attempt to
+# place and route the design to meet that clock rate.
+#
+# TOOLS:
+#   iCE40  → nextpnr-ice40 + icetime (static timing analysis)
+#   ECP5   → nextpnr-ecp5 (timing analysis built in)
+#   iCEcube2 (Lattice native) → uses .sdc format, not .lpf
+#
+# Reference: nextpnr documentation — https://github.com/YosysHQ/nextpnr
+# ---
+
+
+# ---
+# iCE40 example: 12 MHz crystal oscillator (iCE40-HX8K Breakout Board)
+# ---
+
+# LOCATE assigns the port to a physical pin site
+LOCATE COMP "clk" SITE "J3";
+
+# IO_TYPE sets the electrical standard for the pin
+# LVCMOS33 = 3.3V single-ended (most iCE40 boards)
+# LVCMOS25 = 2.5V (some ECP5 boards)
+IOBUF PORT "clk" IO_TYPE=LVCMOS33;
+
+# FREQUENCY tells nextpnr the clock rate to target for timing closure
+# Replace 12.00 with your actual oscillator frequency in MHz
+FREQUENCY PORT "clk" 12.00 MHz;
+
+
+# ---
+# ECP5 example: 25 MHz crystal oscillator (ULX3S)
+# ---
+
+# LOCATE COMP "clk_25mhz" SITE "G2";
+# IOBUF PORT "clk_25mhz" IO_TYPE=LVCMOS33;
+# FREQUENCY PORT "clk_25mhz" 25.00 MHz;
+
+
+# ---
+# ECP5 with differential clock input (LVDS oscillator)
+# ---
+
+# For differential clock pairs on ECP5, use IO_TYPE=LVDS25:
+# LOCATE COMP "clk_p" SITE "P3";
+# LOCATE COMP "clk_n" SITE "P4";
+# IOBUF PORT "clk_p" IO_TYPE=LVDS25;
+# IOBUF PORT "clk_n" IO_TYPE=LVDS25;
+# FREQUENCY PORT "clk_p" 100.00 MHz;
+
+# Only declare FREQUENCY on the positive side of a differential pair.
+
+
+# ---
+# Internal oscillator (no external pin needed — iCE40 only)
+# ---
+# The iCE40 has a built-in 48 MHz oscillator (SB_HFOSC) and a 10 kHz oscillator
+# (SB_LFOSC). These are instantiated in RTL, not constrained in LPF.
+# No LOCATE or FREQUENCY directive needed for internal oscillators.
+
+
+# ---
+# Multiple clocks from different pins
+# ---
+# If your design uses more than one clock from external pins, define each:
+
+# LOCATE COMP "sys_clk"  SITE "J3";   IOBUF PORT "sys_clk"  IO_TYPE=LVCMOS33; FREQUENCY PORT "sys_clk"  12.00 MHz;
+# LOCATE COMP "spi_sclk" SITE "R11";  IOBUF PORT "spi_sclk" IO_TYPE=LVCMOS33; FREQUENCY PORT "spi_sclk" 25.00 MHz;
+
+
+# ---
+# TIMING ANALYSIS AFTER PLACE-AND-ROUTE:
+#
+# For iCE40 (icetime):
+#   icetime -d hx8k -p <board>.pcf -t output.asc
+#   # Reports maximum clock frequency achievable
+#
+# For ECP5 (nextpnr built-in):
+#   nextpnr-ecp5 ... --report timing_report.json
+#   # Or check stdout for "Max frequency" after P&R completes

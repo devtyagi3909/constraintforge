@@ -1,0 +1,162 @@
+# ---
+# ULX3S ECP5 Board — Physical Pin Constraints (.lpf)
+# Device: Lattice ECP5 LFE5U-85F-6BG381C (85k LUT variant)
+# Board:  ULX3S v3.1 (Radiona / Open-source FPGA board)
+# Doc:    https://radiona.org/ulx3s/
+# Alt:    Also compatible with ECP5-5G Evaluation Board (LFE5UM5G-85F)
+#
+# Toolchain: nextpnr-ecp5 + Yosys + prjtrellis
+#
+
+
+# ---
+# CLOCK
+# ---
+
+## 25 MHz on-board crystal oscillator → FPGA global clock input
+LOCATE COMP "clk_25mhz" SITE "G2";
+IOBUF PORT "clk_25mhz" IO_TYPE=LVCMOS33;
+FREQUENCY PORT "clk_25mhz" 25.0 MHz;
+
+
+# ---
+# LEDs  —  8 user LEDs, active high
+# ---
+
+LOCATE COMP "led[0]" SITE "B2";
+LOCATE COMP "led[1]" SITE "C2";
+LOCATE COMP "led[2]" SITE "C1";
+LOCATE COMP "led[3]" SITE "D2";
+LOCATE COMP "led[4]" SITE "D1";
+LOCATE COMP "led[5]" SITE "E2";
+LOCATE COMP "led[6]" SITE "E1";
+LOCATE COMP "led[7]" SITE "H3";
+
+IOBUF PORT "led[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[3]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[4]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[5]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[6]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[7]" IO_TYPE=LVCMOS33;
+
+
+# ---
+# PUSH BUTTONS  —  7 buttons (6 navigation + 1 power), active low
+# ---
+
+LOCATE COMP "btn[0]" SITE "D6";      ;# BTN PWR (power/reset)
+LOCATE COMP "btn[1]" SITE "R1";      ;# BTN F1
+LOCATE COMP "btn[2]" SITE "T1";      ;# BTN F2
+LOCATE COMP "btn[3]" SITE "R18";     ;# BTN UP
+LOCATE COMP "btn[4]" SITE "V1";      ;# BTN DOWN
+LOCATE COMP "btn[5]" SITE "U1";      ;# BTN LEFT
+LOCATE COMP "btn[6]" SITE "H16";     ;# BTN RIGHT
+
+IOBUF PORT "btn[0]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[1]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[2]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[3]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[4]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[5]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[6]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+
+
+# ---
+# SLIDE SWITCHES  —  4 slide switches, active high
+# ---
+
+LOCATE COMP "sw[0]" SITE "E8";
+LOCATE COMP "sw[1]" SITE "D8";
+LOCATE COMP "sw[2]" SITE "D7";
+LOCATE COMP "sw[3]" SITE "E7";
+IOBUF PORT "sw[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "sw[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "sw[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "sw[3]" IO_TYPE=LVCMOS33;
+
+
+# ---
+# UART (via FT231X USB-UART bridge)
+# ---
+
+LOCATE COMP "uart_txd" SITE "L4";    ;# FPGA TX → USB
+LOCATE COMP "uart_rxd" SITE "M1";    ;# USB → FPGA RX
+IOBUF PORT "uart_txd" IO_TYPE=LVCMOS33;
+IOBUF PORT "uart_rxd" IO_TYPE=LVCMOS33;
+
+
+# ---
+# SDRAM (32 MB SDRAM — IS42S16160G-7TL)
+# ---
+#
+# ECP5 can drive SDRAM directly at up to 166 MHz with careful timing.
+# Note: This is SDRAM (not DDR) — single data rate.
+
+LOCATE COMP "sdram_clk"        SITE "F19";
+LOCATE COMP "sdram_cke"        SITE "F20";
+LOCATE COMP "sdram_cs_n"       SITE "P20";
+LOCATE COMP "sdram_ras_n"      SITE "T20";
+LOCATE COMP "sdram_cas_n"      SITE "U20";
+LOCATE COMP "sdram_we_n"       SITE "V20";
+LOCATE COMP "sdram_dqm[0]"    SITE "J20";
+LOCATE COMP "sdram_dqm[1]"    SITE "V19";
+LOCATE COMP "sdram_ba[0]"     SITE "P19";
+LOCATE COMP "sdram_ba[1]"     SITE "N20";
+
+IOBUF PORT "sdram_clk"     IO_TYPE=LVCMOS33 DRIVE=8;
+IOBUF PORT "sdram_cke"     IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_cs_n"    IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_ras_n"   IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_cas_n"   IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_we_n"    IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_ba[*]"   IO_TYPE=LVCMOS33;
+IOBUF PORT "sdram_dqm[*]"  IO_TYPE=LVCMOS33;
+
+
+# ---
+# PMOD CONNECTORS — GP (8 × 3.3V LVCMOS)
+# ---
+
+LOCATE COMP "gp[0]"  SITE "B11";
+LOCATE COMP "gp[1]"  SITE "C11";
+LOCATE COMP "gp[2]"  SITE "A10";
+LOCATE COMP "gp[3]"  SITE "A9";
+LOCATE COMP "gp[4]"  SITE "B10";
+LOCATE COMP "gp[5]"  SITE "B9";
+LOCATE COMP "gp[6]"  SITE "C10";
+LOCATE COMP "gp[7]"  SITE "C9";
+IOBUF PORT "gp[*]" IO_TYPE=LVCMOS33;
+
+
+# ---
+# HDMI OUTPUT (via GPDI differential pairs)
+# ---
+#
+# ULX3S has GPDI (General Purpose Display Interface) — compatible with HDMI.
+# Pairs are LVCMOS33D (3.3V differential LVCMOS = pseudo-LVDS).
+
+LOCATE COMP "gpdi_dp[0]" SITE "A16";   ;# TMDS D0+ (Blue)
+LOCATE COMP "gpdi_dn[0]" SITE "B16";   ;# TMDS D0-
+LOCATE COMP "gpdi_dp[1]" SITE "A14";   ;# TMDS D1+ (Green)
+LOCATE COMP "gpdi_dn[1]" SITE "C14";   ;# TMDS D1-
+LOCATE COMP "gpdi_dp[2]" SITE "A12";   ;# TMDS D2+ (Red)
+LOCATE COMP "gpdi_dn[2]" SITE "A13";   ;# TMDS D2-
+LOCATE COMP "gpdi_dp[3]" SITE "A17";   ;# TMDS CLK+
+LOCATE COMP "gpdi_dn[3]" SITE "B18";   ;# TMDS CLK-
+
+IOBUF PORT "gpdi_dp[*]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dn[*]" IO_TYPE=LVCMOS33D DRIVE=4;
+
+
+# ---
+# WIFI/BT MODULE (ESP32 — connected via SPI and UART)
+# ---
+
+LOCATE COMP "wifi_gpio0"  SITE "L2";
+LOCATE COMP "wifi_rxd"    SITE "K2";    ;# ESP32 RX ← FPGA TX
+LOCATE COMP "wifi_txd"    SITE "L1";    ;# ESP32 TX → FPGA RX
+IOBUF PORT "wifi_gpio0" IO_TYPE=LVCMOS33;
+IOBUF PORT "wifi_rxd"   IO_TYPE=LVCMOS33;
+IOBUF PORT "wifi_txd"   IO_TYPE=LVCMOS33;

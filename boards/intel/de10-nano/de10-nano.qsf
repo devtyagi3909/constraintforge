@@ -1,0 +1,180 @@
+# ---
+# DE10-Nano Master Assignment File (QSF fragment)
+# Device: Intel Cyclone V SE 5CSEBA6U23I7
+# Board:  Terasic DE10-Nano
+# ---
+#
+
+
+# ---
+# DEVICE SETTINGS
+# ---
+
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CSEBA6U23I7
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+
+# ---
+# CLOCK
+# ---
+
+## 50 MHz System Clock (FPGA_CLK1_50)
+set_location_assignment PIN_V11 -to FPGA_CLK1_50
+
+## 50 MHz System Clock 2 (FPGA_CLK2_50)
+set_location_assignment PIN_Y13 -to FPGA_CLK2_50
+
+## 50 MHz System Clock 3 (FPGA_CLK3_50)
+set_location_assignment PIN_E11 -to FPGA_CLK3_50
+
+
+# ---
+# LEDs  —  8 green user LEDs, active high
+# ---
+
+set_location_assignment PIN_W15  -to USER_LED[0]
+set_location_assignment PIN_AA24 -to USER_LED[1]
+set_location_assignment PIN_V16  -to USER_LED[2]
+set_location_assignment PIN_V15  -to USER_LED[3]
+set_location_assignment PIN_AF26 -to USER_LED[4]
+set_location_assignment PIN_AE26 -to USER_LED[5]
+set_location_assignment PIN_Y16  -to USER_LED[6]
+set_location_assignment PIN_AA23 -to USER_LED[7]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to USER_LED[7]
+
+
+# ---
+# PUSH BUTTONS  —  2 push buttons, active low
+# ---
+
+set_location_assignment PIN_AH17 -to KEY[0]
+set_location_assignment PIN_AH16 -to KEY[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[1]
+
+
+# ---
+# SLIDE SWITCHES  —  4 slide switches, active high
+# ---
+
+set_location_assignment PIN_Y24  -to SW[0]
+set_location_assignment PIN_W24  -to SW[1]
+set_location_assignment PIN_W21  -to SW[2]
+set_location_assignment PIN_W20  -to SW[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[3]
+
+
+# ---
+# Arduino Header (GPIO_0)  —  Used as general I/O via Arduino shield form factor
+# ---
+
+set_location_assignment PIN_AB17 -to ARDUINO_IO[0]
+set_location_assignment PIN_AA18 -to ARDUINO_IO[1]
+set_location_assignment PIN_AB21 -to ARDUINO_IO[2]
+set_location_assignment PIN_AC21 -to ARDUINO_IO[3]
+set_location_assignment PIN_AD21 -to ARDUINO_IO[4]
+set_location_assignment PIN_AE19 -to ARDUINO_IO[5]
+set_location_assignment PIN_AF19 -to ARDUINO_IO[6]
+set_location_assignment PIN_AE18 -to ARDUINO_IO[7]
+set_location_assignment PIN_AD18 -to ARDUINO_IO[8]
+set_location_assignment PIN_AH19 -to ARDUINO_IO[9]
+set_location_assignment PIN_AG19 -to ARDUINO_IO[10]
+set_location_assignment PIN_AF18 -to ARDUINO_IO[11]
+set_location_assignment PIN_AH18 -to ARDUINO_IO[12]
+set_location_assignment PIN_AG20 -to ARDUINO_IO[13]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ARDUINO_IO[*]
+
+## Arduino UART (A0, A1 on the Arduino header — connected to UART pins)
+set_location_assignment PIN_AG16 -to ARDUINO_RXD
+set_location_assignment PIN_AH11 -to ARDUINO_TXD
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ARDUINO_RXD
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ARDUINO_TXD
+
+
+# ---
+# GPIO Expansion (GPIO_0, GPIO_1)  —  Two 40-pin expansion headers
+# ---
+
+## GPIO_0 (JP1) — 36 I/O + 2 power + 2 GND
+set_location_assignment PIN_AH27 -to GPIO_0[0]
+set_location_assignment PIN_AF28 -to GPIO_0[1]
+set_location_assignment PIN_AG28 -to GPIO_0[2]
+set_location_assignment PIN_AH28 -to GPIO_0[3]
+set_location_assignment PIN_AF27 -to GPIO_0[4]
+set_location_assignment PIN_AG26 -to GPIO_0[5]
+set_location_assignment PIN_AH26 -to GPIO_0[6]
+set_location_assignment PIN_AF25 -to GPIO_0[7]
+set_location_assignment PIN_AG25 -to GPIO_0[8]
+set_location_assignment PIN_AH24 -to GPIO_0[9]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GPIO_0[*]
+
+
+# ---
+# HPS (Hard Processor System) — Cyclone V HPS pins
+# ---
+
+## HPS UART0 (connected to USB-UART bridge)
+set_location_assignment PIN_B11 -to HPS_UART_TX
+set_location_assignment PIN_C11 -to HPS_UART_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to HPS_UART_TX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to HPS_UART_RX
+
+## HPS SDMMC (on-board microSD card)
+set_location_assignment PIN_A13 -to HPS_SD_CLK
+set_location_assignment PIN_E12 -to HPS_SD_CMD
+set_location_assignment PIN_C12 -to HPS_SD_DATA[0]
+set_location_assignment PIN_D12 -to HPS_SD_DATA[1]
+set_location_assignment PIN_C9  -to HPS_SD_DATA[2]
+set_location_assignment PIN_E10 -to HPS_SD_DATA[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_CMD
+set_instance_assignment -name IO_STANDARD "1.8 V" -to HPS_SD_DATA[*]
+
+## HPS Ethernet (Micrel KSZ9021RN RGMII PHY)
+set_location_assignment PIN_A15 -to HPS_ENET_GTX_CLK
+set_location_assignment PIN_D17 -to HPS_ENET_INT_N
+set_location_assignment PIN_B19 -to HPS_ENET_MDC
+set_location_assignment PIN_A21 -to HPS_ENET_MDIO
+set_location_assignment PIN_A20 -to HPS_ENET_RX_CLK
+set_location_assignment PIN_B21 -to HPS_ENET_RX_DATA[0]
+set_location_assignment PIN_C21 -to HPS_ENET_RX_DATA[1]
+set_location_assignment PIN_A18 -to HPS_ENET_RX_DATA[2]
+set_location_assignment PIN_B18 -to HPS_ENET_RX_DATA[3]
+set_location_assignment PIN_C19 -to HPS_ENET_RX_DV
+set_location_assignment PIN_A19 -to HPS_ENET_TX_DATA[0]
+set_location_assignment PIN_C18 -to HPS_ENET_TX_DATA[1]
+set_location_assignment PIN_B16 -to HPS_ENET_TX_DATA[2]
+set_location_assignment PIN_A17 -to HPS_ENET_TX_DATA[3]
+set_location_assignment PIN_C17 -to HPS_ENET_TX_EN
+set_location_assignment PIN_A16 -to HPS_ENET_RESET_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to HPS_ENET_*
+
+
+# ---
+# TIMING CONSTRAINTS SDC FILE
+# ---
+# Add this line to your .qsf to include the timing constraints:
+# set_global_assignment -name SDC_FILE de10_nano.sdc
+#
+# Your de10_nano.sdc should start with:
+#   set_time_format -unit ns -decimal_places 3
+#   create_clock -name {FPGA_CLK1_50} -period 20.000 -waveform {0 10} [get_ports {FPGA_CLK1_50}]
+#   derive_pll_clocks
+#   derive_clock_uncertainty

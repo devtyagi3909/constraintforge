@@ -1,0 +1,124 @@
+# ---
+# iCE40-HX8K Breakout Board — Physical Pin Constraints (.lpf)
+# Device: Lattice iCE40HX8K-CT256
+# Board:  iCE40-HX8K Breakout Board (Lattice)
+# Doc:    https://www.latticesemi.com/products/developmentboardsandkits/ice40hx8kbreakoutboard
+#
+# Toolchain: nextpnr-ice40 + Yosys (open-source) or iCEcube2 (Lattice)
+#
+# USAGE (nextpnr):
+#   nextpnr-ice40 --hx8k --package ct256 \
+#     --lpf ice40-hx8k.lpf --json design.json --asc out.asc
+#   icepack out.asc out.bin
+#   iceprog out.bin
+# ---
+
+
+# ---
+# CLOCK
+# ---
+
+## 12 MHz on-board crystal oscillator (J3 pin 1)
+LOCATE COMP "clk" SITE "J3";
+IOBUF PORT "clk" IO_TYPE=LVCMOS33;
+FREQUENCY PORT "clk" 12.00 MHz;
+
+
+# ---
+# LEDs  —  8 user LEDs (J3 connector), active high
+# ---
+#
+# LED polarity: Drive HIGH to illuminate.
+
+LOCATE COMP "led[0]" SITE "B5";
+LOCATE COMP "led[1]" SITE "B4";
+LOCATE COMP "led[2]" SITE "A2";
+LOCATE COMP "led[3]" SITE "A1";
+LOCATE COMP "led[4]" SITE "C5";
+LOCATE COMP "led[5]" SITE "C4";
+LOCATE COMP "led[6]" SITE "B3";
+LOCATE COMP "led[7]" SITE "C3";
+
+IOBUF PORT "led[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[3]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[4]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[5]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[6]" IO_TYPE=LVCMOS33;
+IOBUF PORT "led[7]" IO_TYPE=LVCMOS33;
+
+
+# ---
+# PUSH BUTTONS  —  2 buttons, active low
+# ---
+
+LOCATE COMP "btn[0]" SITE "R9";
+LOCATE COMP "btn[1]" SITE "P9";
+IOBUF PORT "btn[0]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+IOBUF PORT "btn[1]" IO_TYPE=LVCMOS33 PULLMODE=UP;
+
+
+# ---
+# UART (via FTDI FT2232H USB chip, channel B)
+# ---
+
+LOCATE COMP "uart_txd" SITE "B12";    ;# FPGA TX → USB RX
+LOCATE COMP "uart_rxd" SITE "B10";    ;# USB TX → FPGA RX
+IOBUF PORT "uart_txd" IO_TYPE=LVCMOS33;
+IOBUF PORT "uart_rxd" IO_TYPE=LVCMOS33;
+
+
+# ---
+# SPI FLASH (Winbond W25Q32 — for bitstream storage)
+# ---
+#
+# These are typically used by the FPGA boot sequence.
+# You can also use them from PL logic for user data storage.
+
+LOCATE COMP "flash_sck"  SITE "R11";
+LOCATE COMP "flash_cs_n" SITE "R12";
+LOCATE COMP "flash_mosi" SITE "P12";
+LOCATE COMP "flash_miso" SITE "P11";
+IOBUF PORT "flash_sck"  IO_TYPE=LVCMOS33;
+IOBUF PORT "flash_cs_n" IO_TYPE=LVCMOS33;
+IOBUF PORT "flash_mosi" IO_TYPE=LVCMOS33;
+IOBUF PORT "flash_miso" IO_TYPE=LVCMOS33;
+
+
+# ---
+# PMOD CONNECTORS — J1, J2, J3 (3× 8-pin single-ended)
+# ---
+
+## J1 (top row = P1–P4, bottom row = P7–P10)
+LOCATE COMP "j1[0]" SITE "A9";     ;# J1 pin 1
+LOCATE COMP "j1[1]" SITE "B9";     ;# J1 pin 2
+LOCATE COMP "j1[2]" SITE "B8";     ;# J1 pin 3
+LOCATE COMP "j1[3]" SITE "A7";     ;# J1 pin 4
+LOCATE COMP "j1[4]" SITE "A10";    ;# J1 pin 7
+LOCATE COMP "j1[5]" SITE "B10";    ;# J1 pin 8
+LOCATE COMP "j1[6]" SITE "C9";     ;# J1 pin 9
+LOCATE COMP "j1[7]" SITE "D8";     ;# J1 pin 10
+IOBUF PORT "j1[0]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[1]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[2]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[3]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[4]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[5]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[6]" IO_TYPE=LVCMOS33;
+IOBUF PORT "j1[7]" IO_TYPE=LVCMOS33;
+
+
+# ---
+# TIMING CONSTRAINT NOTE
+# ---
+#
+# nextpnr uses the FREQUENCY directive on the clock port (see CLOCK section above)
+# as its timing target. It will try to meet that frequency across the design.
+#
+# For interfaces, nextpnr does not support set_input_delay / set_output_delay
+# in LPF format. Timing of external interfaces must be verified manually or
+# via ICETIME static timing analysis tool:
+#   icetime -d hx8k -p ice40-hx8k.pcf out.asc
+#
+# For more detailed timing analysis with nextpnr, use nextpnr-timing-report.

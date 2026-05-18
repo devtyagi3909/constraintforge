@@ -1,0 +1,48 @@
+# ---
+# SPI MASTER CONSTRAINTS  —  Lattice nextpnr (.lpf)
+# ---
+#
+# For SPI master on Lattice FPGAs:
+#   - SCLK is generated inside the FPGA — no FREQUENCY directive on SCLK port
+#   - MOSI, MISO, CS_N are data/control signals — no timing directive in LPF
+#   - nextpnr times all registered paths to the system clock automatically
+#
+# Timing of MOSI/MISO relative to SCLK is ensured by your RTL (synchronous
+# logic clocked by sys_clk that generates SCLK and data in lock-step).
+# nextpnr verifies internal timing — board-level I/O delays must be verified
+# manually against the slave device's datasheet.
+#
+# Reference: nextpnr documentation — https://github.com/YosysHQ/nextpnr
+# Reference: SPI Bus Specification
+# ---
+
+
+# System clock — nextpnr times all logic to this
+LOCATE COMP "clk" SITE "J3";          ;# iCE40-HX8K example — adjust per board
+IOBUF PORT "clk" IO_TYPE=LVCMOS33;
+FREQUENCY PORT "clk" 12.00 MHz;
+
+
+# ---
+# SPI pins — pin location and I/O standard only, no timing directive
+# ---
+
+# SCLK output (FPGA generates this)
+LOCATE COMP "spi_sclk" SITE "PIN_XX";
+IOBUF PORT "spi_sclk" IO_TYPE=LVCMOS33 DRIVE=8;
+
+# MOSI output (Master Out Slave In)
+LOCATE COMP "spi_mosi" SITE "PIN_XX";
+IOBUF PORT "spi_mosi" IO_TYPE=LVCMOS33 DRIVE=8;
+
+# MISO input (Master In Slave Out)
+LOCATE COMP "spi_miso" SITE "PIN_XX";
+IOBUF PORT "spi_miso" IO_TYPE=LVCMOS33;
+
+# CS_N output (Chip Select, active low)
+LOCATE COMP "spi_cs_n" SITE "PIN_XX";
+IOBUF PORT "spi_cs_n" IO_TYPE=LVCMOS33 DRIVE=8;
+
+# Multiple chip selects:
+# LOCATE COMP "spi_cs0_n" SITE "PIN_XX"; IOBUF PORT "spi_cs0_n" IO_TYPE=LVCMOS33;
+# LOCATE COMP "spi_cs1_n" SITE "PIN_XX"; IOBUF PORT "spi_cs1_n" IO_TYPE=LVCMOS33;

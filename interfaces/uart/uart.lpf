@@ -1,0 +1,54 @@
+# ---
+# UART CONSTRAINTS  —  Lattice nextpnr (.lpf)
+# ---
+#
+# UART is asynchronous — no timing constraint needed on the data signals.
+# Only pin location and I/O standard are required.
+#
+# nextpnr does not analyze unconstrained I/O paths, so not adding FREQUENCY
+# on UART ports is the correct approach — equivalent to set_false_path in XDC.
+#
+# YOUR RTL MUST:
+#   - Synchronize uart_rxd with a 2-FF synchronizer before use
+#   - Oversample the RX line (typically 16x the baud rate) for data recovery
+#
+# Reference: nextpnr documentation — https://github.com/YosysHQ/nextpnr
+# ---
+
+
+# ---
+# iCE40-HX8K Breakout Board example
+# (FTDI FT2232H USB-UART bridge on channel B)
+# ---
+
+# FPGA TX → USB RX (FPGA drives this output)
+LOCATE COMP "uart_txd" SITE "B12";
+IOBUF PORT "uart_txd" IO_TYPE=LVCMOS33;
+
+# USB TX → FPGA RX (FPGA receives this input)
+LOCATE COMP "uart_rxd" SITE "B10";
+IOBUF PORT "uart_rxd" IO_TYPE=LVCMOS33;
+
+
+# ---
+# ULX3S ECP5 example (FT231X USB-UART bridge)
+# ---
+# LOCATE COMP "uart_txd" SITE "L4";
+# LOCATE COMP "uart_rxd" SITE "M1";
+# IOBUF PORT "uart_txd" IO_TYPE=LVCMOS33;
+# IOBUF PORT "uart_rxd" IO_TYPE=LVCMOS33;
+
+
+# ---
+# Generic template (replace PIN_XX with actual pin from your board's LPF)
+# ---
+# LOCATE COMP "uart_txd" SITE "PIN_XX";
+# LOCATE COMP "uart_rxd" SITE "PIN_XX";
+# IOBUF PORT "uart_txd" IO_TYPE=LVCMOS33;
+# IOBUF PORT "uart_rxd" IO_TYPE=LVCMOS33;
+
+# Optional: flow control
+# LOCATE COMP "uart_rts" SITE "PIN_XX"; IOBUF PORT "uart_rts" IO_TYPE=LVCMOS33;
+# LOCATE COMP "uart_cts" SITE "PIN_XX"; IOBUF PORT "uart_cts" IO_TYPE=LVCMOS33;
+
+# No FREQUENCY directive on UART pins — they are asynchronous.
