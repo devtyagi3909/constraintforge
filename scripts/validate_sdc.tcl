@@ -23,7 +23,12 @@ set warnings 0
 
 proc report {severity lineno msg} {
     global errors warnings
-    set icon [dict get {ERROR "🔴" WARNING "🟡" INFO "🔵"} $severity "·"]
+    set severity_icons [dict create ERROR "🔴" WARNING "🟡" INFO "🔵"]
+    if {[dict exists $severity_icons $severity]} {
+        set icon [dict get $severity_icons $severity]
+    } else {
+        set icon "·"
+    }
     if {$lineno > 0} {
         puts "  $icon \[$severity\] line $lineno: $msg"
     } else {
@@ -101,7 +106,7 @@ proc validate_sdc {filepath} {
         }
 
         # Catch common SDC typos
-        if {[regexp {-period\s+([\d.]+)} $trimmed -> period]} {
+        if {[regexp -- {-period\s+([\d.]+)} $trimmed -> period]} {
             if {$period < 1.0} {
                 report WARNING $lineno "Very short clock period ${period}ns ([expr {1000.0/$period}] MHz) — verify"
             }

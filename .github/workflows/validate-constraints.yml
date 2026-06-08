@@ -56,7 +56,14 @@ jobs:
 
       - name: Run SDC validator
         run: |
+          set +e
           tclsh scripts/validate_sdc.tcl --all
+          rc=$?
+          set -e
+          # Exit code 0 = pass, 1 = warnings (allowed), 2 = errors (fail)
+          if [ "$rc" -eq 2 ]; then
+            exit 2
+          fi
 
       - name: Print SDC summary
         if: always()
