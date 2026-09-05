@@ -8,10 +8,6 @@ The official docs are spread across Xilinx UG903, Intel AN433, a dozen app notes
 
 **[Browse the site](https://devtyagi3909.github.io/constraintforge)** | **[Timing Calculator](https://devtyagi3909.github.io/constraintforge/timing-calculator.html)** | **[AI Generator](https://devtyagi3909.github.io/constraintforge/ai-generator.html)**
 
-<p align="center">
-  <img src="assets/timing_visualizer.svg" alt="Timing Visualizer" />
-</p>
-
 ---
 
 ## Tools
