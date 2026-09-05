@@ -5,13 +5,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "constraintforge"
 version = "0.1.0"
-description = "Pre-synthesis structural timing analyzer"
+description = "A pre-synthesis structural timing analyzer and constraint generator for RTL."
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [
+  {name = "Dev Tyagi", email = "dev@example.com"}
+]
 dependencies = [
     "click>=8.1.0",
     "rich>=13.0.0",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
+]
+
+[project.urls]
+Homepage = "https://devtyagi3909.github.io/constraintforge"
+Repository = "https://github.com/devtyagi3909/constraintforge"
 
 [project.scripts]
 constraintforge = "constraintforge.main:cli"
