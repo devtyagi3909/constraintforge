@@ -10,7 +10,7 @@ The official docs are spread across Xilinx UG903, Intel AN433, a dozen app notes
 
 
 <p align="center">
-  <img src="terminal_demo.svg" alt="ConstraintForge Structural Diagnostic Engine Demo" />
+  <img src="assets/terminal_demo.svg" alt="ConstraintForge Terminal Demo" />
 </p>
 
 ## 🚀 NEW: Pre-Synthesis Structural Diagnostic Engine
