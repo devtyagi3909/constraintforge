@@ -13,7 +13,7 @@ The official docs are spread across Xilinx UG903, Intel AN433, a dozen app notes
   <img src="assets/terminal_demo.svg" alt="ConstraintForge Terminal Demo" />
 </p>
 
-## 🚀 NEW: Pre-Synthesis Structural Diagnostic Engine
+## NEW: Pre-Synthesis Structural Diagnostic Engine
 
 ConstraintForge is now more than just constraints. It includes a headless structural timing diagnostic CLI that runs in your terminal and parses your Verilog into a Directed Acyclic Graph (DAG) to instantly detect logic depth and fanout bottlenecks. 
 
