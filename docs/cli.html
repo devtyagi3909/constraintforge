@@ -558,17 +558,16 @@
                 <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">1. System Dependencies</h3>
                 <div class="code-snippet">
                     <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
-                    <pre><code>brew install yosys python3</code></pre>
+                    <pre><code>brew install yosys</code></pre>
                 </div>
-                <p class="cmd-desc">Installs the headless synthesis engine and the Python runtime (macOS). Use <code>apt-get install yosys</code> for Linux.</p>
+                <p class="cmd-desc">ConstraintForge relies on headless Yosys to extract the AST. Use <code>apt-get install yosys</code> for Linux.</p>
 
-                <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">2. Clone the Repository</h3>
+                <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">2. Install via PIP</h3>
                 <div class="code-snippet">
                     <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
-                    <pre><code>git clone https://github.com/devtyagi3909/constraintforge.git
-cd constraintforge</code></pre>
+                    <pre><code>pip install constraintforge</code></pre>
                 </div>
-                <p class="cmd-desc">Clones the open-source repository to your local machine and navigates into the engine directory.</p>
+                <p class="cmd-desc">Installs the ConstraintForge engine globally. You can now use the <code>constraintforge</code> command from any directory.</p>
 
                 <div class="mac-terminal" style="margin-top:32px;">
                     <div class="mac-header">
@@ -604,7 +603,7 @@ cd constraintforge</code></pre>
 
                 <div class="code-snippet">
                     <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
-                    <pre><code>python3 diagnose.py <span style="color:#a855f7">picorv32.v</span> --top <span style="color:#a855f7">picorv32</span></code></pre>
+                    <pre><code>constraintforge <span style="color:#a855f7">picorv32.v</span> --top <span style="color:#a855f7">picorv32</span></code></pre>
                 </div>
                 <ul class="cmd-args">
                     <li><strong>[file.v]</strong> : The path to the target Verilog or SystemVerilog file.</li>
@@ -809,24 +808,22 @@ cd constraintforge</code></pre>
         }
 
         const anim1 = [
-            { type: 'input', text: 'git clone https://github.com/devtyagi3909/constraintforge.git', delay: 800 },
-            { type: 'output', html: "Cloning into 'constraintforge'...", delay: 400 },
-            { type: 'output', html: '<span class="output-dim">remote: Enumerating objects: 142, done.</span>', delay: 200 },
-            { type: 'output', html: '<span class="output-dim">Receiving objects: 100% (142/142), 2.41 MiB | 5.34 MiB/s, done.</span>', delay: 300 },
             { type: 'prompt', prompt: '~/dev $', delay: 400 },
-            { type: 'input', text: 'cd constraintforge', delay: 600 },
-            { type: 'prompt', prompt: '~/dev/constraintforge $', delay: 200 },
-            { type: 'input', text: 'brew install yosys python3', delay: 800 },
-            { type: 'output', html: '<span class="output-info">[INFO]</span> Checking dependencies...', delay: 400 },
-            { type: 'output', html: '<span class="output-success">[OK]</span> Found Yosys 0.33', delay: 300 },
-            { type: 'output', html: '<span class="output-success">[OK]</span> Found Python 3.11.5', delay: 150 },
-            { type: 'output', html: '<span class="output-success">[SUCCESS]</span> Environment ready. ConstraintForge is armed.', delay: 600 },
-            { type: 'prompt', prompt: '~/dev/constraintforge $', delay: 200 }
+            { type: 'input', text: 'brew install yosys', delay: 800 },
+            { type: 'output', html: '<span class="output-info">==></span> Downloading https://ghcr.io/v2/homebrew/core/yosys', delay: 400 },
+            { type: 'output', html: '<span class="output-success">==></span> Installed yosys 0.33', delay: 200 },
+            { type: 'prompt', prompt: '~/dev $', delay: 400 },
+            { type: 'input', text: 'pip install constraintforge', delay: 600 },
+            { type: 'output', html: 'Collecting constraintforge', delay: 300 },
+            { type: 'output', html: 'Downloading constraintforge-2.0.1-py3-none-any.whl (42 kB)', delay: 200 },
+            { type: 'output', html: 'Installing collected packages: constraintforge', delay: 250 },
+            { type: 'output', html: '<span class="output-success">Successfully installed constraintforge-2.0.1</span>', delay: 150 },
+            { type: 'prompt', prompt: '~/dev $', delay: 400 }
         ];
 
         const anim2 = [
             { type: 'prompt', prompt: '~/dev/constraintforge $', delay: 500 },
-            { type: 'input', text: 'python3 diagnose.py picorv32.v --top picorv32', delay: 1000 },
+            { type: 'input', text: 'constraintforge picorv32.v --top picorv32', delay: 1000 },
             { type: 'output', html: '<span class="output-info">[*]</span> Parsing picorv32.v AST via headless Yosys...', delay: 600 },
             { type: 'output', html: '<span class="output-info">[*]</span> Extracting Directed Acyclic Graph (DAG)...', delay: 300 },
             { type: 'output', html: '<span class="output-info">[*]</span> Executing Topological DFS Memoization...', delay: 200 },
