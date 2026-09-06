@@ -19,10 +19,10 @@ ConstraintForge shifts structural timing closure entirely to the left. It bypass
 ConstraintForge invokes headless [Yosys](https://yosyshq.net/yosys/) to parse your Verilog into a Directed Acyclic Graph (DAG). Because it operates strictly on the gate topology rather than physical routing, the algorithm scales deterministically at **$O(|V| + |E|)$**.
 
 ### What it flags instantly:
-- 🔴 **Setup-Time Risks:** Calculates exact logic depth between registers.
-- 🔴 **CDC Violations:** Maps clock domains and traps unsynchronized crossings (missing 2FFs).
-- 🔴 **Fanout Bottlenecks:** Flags nets driving >100 loads so you can insert buffer trees early.
-- ✅ **Source-Code Back-Annotation:** Maps hazards directly to your exact `.v` line numbers.
+- Setup-Time Risks: Calculates exact logic depth between registers.
+- CDC Violations: Maps clock domains and traps unsynchronized crossings (missing 2FFs).
+- Fanout Bottlenecks: Flags nets driving >100 loads so you can insert buffer trees early.
+- Source-Code Back-Annotation:** Maps hazards directly to your exact `.v` line numbers.
 
 ### Installation
 
