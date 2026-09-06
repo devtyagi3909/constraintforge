@@ -1,69 +1,95 @@
-#!/usr/bin/env python3
-import sys
-sys.setrecursionlimit(10000)
+import argparse
 import subprocess
 import json
-import argparse
+import sys
 import os
 from collections import defaultdict
 
 def run_yosys(file_paths, top_module):
-    print(f"[*] Parsing {file_paths} AST via headless Yosys...")
-    yosys_cmd = [
-        "yosys", "-q", "-p",
-        f"prep -top {top_module}; flatten; opt; techmap; opt; write_json -"
-    ] + file_paths
+    read_cmds = []
+    for fp in file_paths:
+        if fp.endswith('.sv'):
+            read_cmds.append(f"read_verilog -sv {fp}")
+        else:
+            read_cmds.append(f"read_verilog {fp}")
+    
+    script = "; ".join(read_cmds)
+    script += f"; prep -top {top_module}; flatten; opt; techmap; opt; write_json"
+    
+    cmd = ["yosys", "-p", script]
     try:
-        res = subprocess.run(yosys_cmd, check=True, capture_output=True, text=True)
-        return res.stdout
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        # Parse JSON output from stdout
+        json_str = ""
+        capture = False
+        for line in result.stdout.splitlines():
+            if line.strip() == "{":
+                capture = True
+            if capture:
+                json_str += line + "\n"
+                
+        if not json_str:
+            sys.stderr.write("Error: Yosys did not output valid JSON.\n")
+            sys.exit(1)
+            
+        return json.loads(json_str)
     except subprocess.CalledProcessError as e:
-        print(f"Error running Yosys:\n{e.stderr}", file=sys.stderr)
+        sys.stderr.write(f"Yosys failed:\n{e.stderr}\n")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        sys.stderr.write(f"Failed to parse Yosys JSON: {e}\n")
         sys.exit(1)
 
-def diagnose_rtl(file_paths, top_module):
-    json_output = run_yosys(file_paths, top_module)
+def diagnose_rtl(args):
+    # Load exceptions if provided
+    exceptions = {"false_paths": [], "cdc_safe": []}
+    if args.exceptions and os.path.exists(args.exceptions):
+        try:
+            with open(args.exceptions, 'r') as f:
+                exceptions = json.load(f)
+        except Exception as e:
+            sys.stderr.write(f"Failed to load exceptions: {e}\n")
+            
+    if not args.json and not args.sarif:
+        print(f"[*] Parsing {', '.join(args.files)} AST via headless Yosys...")
+        
+    yosys_ast = run_yosys(args.files, args.top)
     
-    print("[*] Extracting Directed Acyclic Graph (DAG)...")
-    try:
-        data = json.loads(json_output)
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON from Yosys: {e}", file=sys.stderr)
+    if not args.json and not args.sarif:
+        print("[*] Extracting Directed Acyclic Graph (DAG)...")
+        
+    modules = yosys_ast.get("modules", {})
+    if not modules:
+        sys.stderr.write("No modules found in AST.\n")
         sys.exit(1)
         
-    modules = data.get("modules", {})
-    if top_module not in modules:
-        print(f"Error: Top module {top_module} not found in Yosys output.", file=sys.stderr)
-        sys.exit(1)
-        
-    mod = modules[top_module]
+    top_mod = modules.get(args.top) or list(modules.values())[0]
     
-    ports = mod.get("ports", {})
-    cells = mod.get("cells", {})
+    ports = top_mod.get("ports", {})
+    cells = top_mod.get("cells", {})
+    netnames = top_mod.get("netnames", {})
     
-    bit_driver = {}
+    bit_to_netname = {}
+    for net, data in netnames.items():
+        for bit in data.get("bits", []):
+            if isinstance(bit, int):
+                bit_to_netname[bit] = net
+
+    nodes = set()
     sources = set()
     sinks = set()
     comb_cells = set()
-    nodes = set()
+    bit_driver = {}
     
     node_src = {}
     node_clk = {}
     
-    # Map bit numbers to human-readable net names for CDC
-    netnames = mod.get("netnames", {})
-    bit_to_netname = {}
-    for netname, net_data in netnames.items():
-        if net_data.get("hide_name", 0) == 0:
-            for bit in net_data["bits"]:
-                if isinstance(bit, int):
-                    bit_to_netname[bit] = netname
-
-    # Identify ports
+    # Identify ports as sources/sinks
     for port_name, port_data in ports.items():
         direction = port_data["direction"]
         node_name = f"port:{port_name}"
         nodes.add(node_name)
-        node_src[node_name] = mod.get("attributes", {}).get("src", "unknown")
+        node_src[node_name] = top_mod.get("attributes", {}).get("src", "unknown")
         
         if direction in ["input", "inout"]:
             sources.add(node_name)
@@ -81,7 +107,6 @@ def diagnose_rtl(file_paths, top_module):
         src_attr = cell_data.get("attributes", {}).get("src", "unknown")
         
         if is_seq:
-            # Extract clock bit if any (usually 'CLK', 'C', 'EN')
             clk_bit = None
             clk_port_name = None
             connections = cell_data.get("connections", {})
@@ -170,7 +195,8 @@ def diagnose_rtl(file_paths, top_module):
                             adj[bit_driver[bit]].append(node_name)
                             bit_sinks[bit].append(node_name)
                             
-    print("[*] Executing Topological DFS Memoization...\n")
+    if not args.json and not args.sarif:
+        print("[*] Executing Topological DFS Memoization...\n")
     
     memo = {}
     comb_loops = set()
@@ -207,58 +233,161 @@ def diagnose_rtl(file_paths, top_module):
         
     global_max = -1
     global_path = []
+    all_paths = []
     
     for src in sources:
         depth, path = dfs(src)
+        if depth >= 0:
+            all_paths.append((depth, path))
         if depth > global_max:
             global_max = depth
             global_path = path
             
-    print(f"## DIAGNOSTIC REPORT: {', '.join(file_paths)} ##\n")
+    exit_code = 0
+    results = {
+        "loops": [],
+        "fanout": [],
+        "setup_violations": [],
+        "cdc_violations": []
+    }
     
     if comb_loops:
-        print("[WARNING] Combinational loop(s) detected during DFS!")
-        for loop_node in list(comb_loops)[:5]:
-            print(f"  Loop at: {loop_node} ({node_src.get(loop_node, 'unknown')})")
-        print()
+        exit_code = 1
+        for loop_node in list(comb_loops):
+            results["loops"].append({"node": loop_node, "src": node_src.get(loop_node, 'unknown')})
         
     # Check for High Fanout
-    high_fanout_detected = False
     for bit, children in bit_sinks.items():
         fanout = len(set(children))
-        if fanout > 100:
-            if not high_fanout_detected:
-                print("[WARNING] High-fanout nets (>100) detected:")
-                high_fanout_detected = True
+        if fanout > args.fanout_threshold:
             u = bit_driver.get(bit, "unknown")
             net_name = bit_to_netname.get(bit, f"bit_{bit}")
-            print(f"  Net: {net_name} (Driver: {u} [{node_src.get(u, 'unknown')}]) -> Fanout: {fanout}")
-    if high_fanout_detected:
-        print()
-    
-    if global_max >= 0 and len(global_path) >= 2:
-        source_node = global_path[0]
-        sink_node = global_path[-1]
-        
+            results["fanout"].append({
+                "net": net_name,
+                "driver": u,
+                "src": node_src.get(u, 'unknown'),
+                "count": fanout
+            })
+            exit_code = 1
+            
+    # Check Paths for Setup and CDC
+    for depth, path in sorted(all_paths, reverse=True):
+        if len(path) < 2:
+            continue
+            
+        source_node = path[0]
+        sink_node = path[-1]
         source_clk = node_clk.get(source_node)
         sink_clk = node_clk.get(sink_node)
         
-        print("[WARNING] setup-time risk detected:")
-        print(f"  Source:      {source_node} ({node_src.get(source_node, 'unknown')}) [Clk: {source_clk}]")
-        print(f"  Sink:        {sink_node} ({node_src.get(sink_node, 'unknown')}) [Clk: {sink_clk}]")
-        print(f"  Logic Depth: {global_max} gates")
+        # Check exceptions
+        src_file_line = node_src.get(source_node, "unknown")
+        sink_file_line = node_src.get(sink_node, "unknown")
         
-        # CDC Warning
-        if source_clk and sink_clk and source_clk != sink_clk:
-            print(f"  [!] CDC ALERT: Clock domain crossing detected from {source_clk} to {sink_clk}!")
-        print()
+        is_false_path = any(fp.get("from") in src_file_line and fp.get("to") in sink_file_line for fp in exceptions.get("false_paths", []))
+        is_cdc_safe = any(cp.get("from") == source_clk and cp.get("to") == sink_clk for cp in exceptions.get("cdc_safe", []))
+        
+        if not is_false_path and depth > args.depth_threshold:
+            if not results["setup_violations"]: # Just capture the worst for now
+                results["setup_violations"].append({
+                    "source": source_node, "source_src": src_file_line, "source_clk": source_clk,
+                    "sink": sink_node, "sink_src": sink_file_line, "sink_clk": sink_clk,
+                    "depth": depth,
+                    "trace": [ {"node": n, "src": node_src.get(n, "unknown")} for n in path ] if args.explain else []
+                })
+                exit_code = 1
+                
+        if source_clk and sink_clk and source_clk != sink_clk and not is_cdc_safe:
+            # Only record unique CDC crossings
+            existing = [c for c in results["cdc_violations"] if c["source_clk"] == source_clk and c["sink_clk"] == sink_clk]
+            if not existing:
+                results["cdc_violations"].append({
+                    "source": source_node, "source_src": src_file_line, "source_clk": source_clk,
+                    "sink": sink_node, "sink_src": sink_file_line, "sink_clk": sink_clk
+                })
+                exit_code = 1
+
+    # Output generation
+    if args.json:
+        print(json.dumps(results, indent=2))
+    elif args.sarif:
+        # Minimal SARIF generation for GitHub Code Scanning
+        sarif = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+                "tool": {
+                    "driver": {
+                        "name": "ConstraintForge",
+                        "informationUri": "https://devtyagi3909.github.io/constraintforge",
+                        "rules": [
+                            {"id": "CF001", "name": "LogicDepth", "shortDescription": {"text": "Logic depth exceeds threshold"}},
+                            {"id": "CF002", "name": "CDC", "shortDescription": {"text": "Unsynchronized Clock Domain Crossing"}},
+                            {"id": "CF003", "name": "HighFanout", "shortDescription": {"text": "Net fanout exceeds threshold"}}
+                        ]
+                    }
+                },
+                "results": []
+            }]
+        }
+        for sv in results["setup_violations"]:
+            sarif["runs"][0]["results"].append({
+                "ruleId": "CF001",
+                "message": {"text": f"Logic depth of {sv['depth']} exceeds threshold of {args.depth_threshold}."},
+                "locations": [{"physicalLocation": {"artifactLocation": {"uri": sv['source_src'].split(':')[0]}}}]
+            })
+        print(json.dumps(sarif, indent=2))
     else:
-        print("[OK] No significant combinational path detected.\n")
+        print(f"## DIAGNOSTIC REPORT: {', '.join(args.files)} ##\n")
+        if results["loops"]:
+            print("[WARNING] Combinational loop(s) detected during DFS!")
+            for l in results["loops"][:5]:
+                print(f"  Loop at: {l['node']} ({l['src']})")
+            print()
+            
+        if results["fanout"]:
+            print(f"[WARNING] High-fanout nets (>{args.fanout_threshold}) detected:")
+            for f in results["fanout"][:5]:
+                print(f"  Net: {f['net']} (Driver: {f['driver']} [{f['src']}]) -> Fanout: {f['count']}")
+            print()
+            
+        if results["setup_violations"]:
+            v = results["setup_violations"][0]
+            print(f"[WARNING] Setup-time risk detected (> {args.depth_threshold} gates):")
+            print(f"  Source:      {v['source']} ({v['source_src']}) [Clk: {v['source_clk']}]")
+            print(f"  Sink:        {v['sink']} ({v['sink_src']}) [Clk: {v['sink_clk']}]")
+            print(f"  Logic Depth: {v['depth']} gates")
+            if args.explain and v['trace']:
+                print("  Path Trace:")
+                for step in v['trace']:
+                    print(f"    -> {step['node']} ({step['src']})")
+            print()
+            
+        if results["cdc_violations"]:
+            for c in results["cdc_violations"]:
+                print(f"[!] CDC ALERT: Unsynchronized crossing from {c['source_clk']} to {c['sink_clk']}!")
+                print(f"    Path: {c['source_src']} -> {c['sink_src']}")
+            print()
+            
+        if exit_code == 0:
+            print("[OK] No structural violations detected.\n")
+
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ConstraintForge Pre-Synthesis Structural Diagnostic Engine")
     parser.add_argument("files", nargs='+', help="Path to RTL file(s)")
     parser.add_argument("--top", required=True, help="Top module name")
     
+    # New CLI features
+    parser.add_argument("--depth-threshold", type=int, default=30, help="Maximum allowable logic depth (gates)")
+    parser.add_argument("--fanout-threshold", type=int, default=100, help="Maximum allowable fanout per net")
+    parser.add_argument("--exceptions", type=str, help="JSON file containing false_paths and cdc_safe exceptions")
+    parser.add_argument("--explain", action="store_true", help="Print the full node-by-node path trace for violations")
+    
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--json", action="store_true", help="Output results in JSON format")
+    group.add_argument("--sarif", action="store_true", help="Output results in SARIF format for GitHub Code Scanning")
+    
     args = parser.parse_args()
-    diagnose_rtl(args.files, args.top)
+    diagnose_rtl(args)
