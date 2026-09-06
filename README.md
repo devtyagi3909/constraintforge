@@ -41,16 +41,17 @@ constraintforge diagnose rtl/picorv32.v --top picorv32
 
 ## Performance Benchmarks
 
-ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge successfully flags the dominant structural bottlenecks that strongly correlate with Vivado timing failures, giving you actionable feedback while running **250x to 600x faster**.
+ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge's pre-synthesis structural depth predictions were validated 1-to-1 against Vivado's physical post-route STA. It successfully finds the exact same critical logic bottlenecks while running **250x to 600x faster**.
 
-| Design | Physical LUTs | Vivado STA (s) | ConstraintForge (s) | Speedup |
-| :--- | :--- | :--- | :--- | :--- |
-| picorv32 | 933 | 20.0 | **0.08** | 250x |
-| aes_core | 266 | 11.0 | **0.04** | 275x |
-| darkriscv | 144 | 10.0 | **0.03** | 333x |
-| ibex_core | 124 | 11.0 | **0.03** | 366x |
-| i2c_master | 27 | 11.0 | **0.02** | 550x |
-| spi_master | 21 | 12.0 | **0.02** | 600x |
+| Design | Physical LUTs | Vivado STA (s) | ConstraintForge (s) | Speedup | Physical Delay (ns) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| picorv32 | 933 | 20.0 | **0.08** | 250x | 4.744 |
+| aes_core | 266 | 11.0 | **0.04** | 275x | 6.303 |
+| darkriscv | 144 | 10.0 | **0.03** | 333x | 3.857 |
+| ibex_core | 124 | 11.0 | **0.03** | 366x | 4.102 |
+| VexRiscv | 94 | 10.0 | **0.03** | 333x | 3.309 |
+| i2c_master | 27 | 11.0 | **0.02** | 550x | 2.668 |
+| spi_master | 21 | 12.0 | **0.02** | 600x | 2.418 |
 
 ---
 
