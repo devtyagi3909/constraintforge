@@ -41,7 +41,7 @@ constraintforge diagnose rtl/picorv32.v --top picorv32
 
 ## Performance Benchmarks
 
-ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge's pre-synthesis structural depth predictions were validated 1-to-1 against Vivado's physical post-route STA. It successfully finds the exact same critical logic bottlenecks while running **250x to 600x faster**.
+ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge's pre-synthesis structural depth predictions were validated 1-to-1 against Vivado's physical post-route STA. It successfully finds the exact same critical logic bottlenecks while running **83x to 600x faster**.
 
 | Design | Physical LUTs | Vivado STA (s) | ConstraintForge (s) | Speedup | Physical Delay (ns) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -52,6 +52,7 @@ ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/
 | VexRiscv | 94 | 10.0 | **0.03** | 333x | 3.309 |
 | i2c_master | 27 | 11.0 | **0.02** | 550x | 2.668 |
 | spi_master | 21 | 12.0 | **0.02** | 600x | 2.418 |
+| fetch_unit (riscv-ooo) | 11 | 10.0 | **0.12** | 83x | 2.980 |
 
 ---
 
