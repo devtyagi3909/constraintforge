@@ -32,7 +32,7 @@ Run the engine on any RTL file:
 constraintforge diagnose rtl/fetch_unit.v
 ```
 
-**[Read the IEEE Paper on the Mathematical Correlation of this Tool (WOSET 2026 Submission)]()**
+
 
 ---
 

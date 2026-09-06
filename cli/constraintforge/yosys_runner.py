@@ -9,7 +9,7 @@ def generate_netlist(src_files, top_module):
     files_str = " ".join(src_files)
     
     yosys_script = f"""
-    read_verilog {files_str}
+    read_verilog -sv {files_str}
     hierarchy -top {top_module}
     proc
     flatten

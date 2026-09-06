@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="term1-body"></div>
+<script>
+    const termBody = document.getElementById('term1-body');
+    let currentLine = document.createElement('div');
+    currentLine.innerHTML = '<span class="prompt">~/dev $</span> <span class="command cursor"></span>';
+    termBody.appendChild(currentLine);
+    let commandSpan = currentLine.querySelector('.command');
+    
+    // step: input
+    commandSpan.classList.remove('cursor');
+    commandSpan.innerHTML = 'git clone';
+    currentLine.innerHTML = `<span class="prompt">~/dev $</span> <span class="command">git clone</span>`;
+    currentLine = document.createElement('div');
+    termBody.appendChild(currentLine);
+    
+    // step: output
+    let outLine = document.createElement('div');
+    outLine.innerHTML = 'Cloning into...';
+    termBody.appendChild(outLine);
+    
+    console.log(termBody.innerHTML);
+</script>
+</body>
+</html>
