@@ -409,7 +409,21 @@
             <section>
                 <h2 id="installation">Installation</h2>
                 <p>Pull the engine and initialize the local environment. ConstraintForge relies on headless Yosys to extract the AST.</p>
-                <div class="mac-terminal">
+                
+                <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">1. System Dependencies</h3>
+                <div class="code-snippet">
+                    <pre><code>brew install yosys python3</code></pre>
+                </div>
+                <p class="cmd-desc">Installs the headless synthesis engine and the Python runtime (macOS). Use <code>apt-get install yosys</code> for Linux.</p>
+
+                <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">2. Clone the Repository</h3>
+                <div class="code-snippet">
+                    <pre><code>git clone https://github.com/devtyagi3909/constraintforge.git
+cd constraintforge</code></pre>
+                </div>
+                <p class="cmd-desc">Clones the open-source repository to your local machine and navigates into the engine directory.</p>
+
+                <div class="mac-terminal" style="margin-top:32px;">
                     <div class="mac-header">
                         <div class="mac-dot close"></div>
                         <div class="mac-dot minimize"></div>
@@ -422,7 +436,16 @@
             <section>
                 <h2 id="execution">Execution & Diagnostics</h2>
                 <p>Run the engine against your RTL. The Topological DFS will flag deep combinational paths, missing CDC synchronizers, and extreme fanout instantly.</p>
-                <div class="mac-terminal">
+                
+                <div class="code-snippet">
+                    <pre><code>python3 diagnose.py <span style="color:#a855f7">picorv32.v</span> --top <span style="color:#a855f7">picorv32</span></code></pre>
+                </div>
+                <ul class="cmd-args">
+                    <li><strong>[file.v]</strong> : The path to the target Verilog or SystemVerilog file.</li>
+                    <li><strong>--top &lt;name&gt;</strong> : Specifies the top-level module to extract the Directed Acyclic Graph (DAG) from.</li>
+                </ul>
+
+                <div class="mac-terminal" style="margin-top:32px;">
                     <div class="mac-header">
                         <div class="mac-dot close"></div>
                         <div class="mac-dot minimize"></div>
