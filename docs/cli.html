@@ -322,6 +322,64 @@
             .main-content { padding: 32px 24px; }
             .header-left .search-bar { display: none; }
         }
+    
+        /* Code Snippets */
+        .code-snippet {
+            position: relative;
+            background-color: #111;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        .code-snippet pre {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #e4e4e7;
+            overflow-x: auto;
+            margin: 0;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #222;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+        .cmd-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border-subtle);
+        }
+        .cmd-args {
+            list-style: none;
+            margin-bottom: 32px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border-subtle);
+        }
+        .cmd-args li {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-family: var(--font-mono);
+        }
+        .cmd-args li strong {
+            color: var(--text-primary);
+        }
+
     </style>
 </head>
 <body>
@@ -412,12 +470,14 @@
                 
                 <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">1. System Dependencies</h3>
                 <div class="code-snippet">
+                    <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
                     <pre><code>brew install yosys python3</code></pre>
                 </div>
                 <p class="cmd-desc">Installs the headless synthesis engine and the Python runtime (macOS). Use <code>apt-get install yosys</code> for Linux.</p>
 
                 <h3 style="margin-top:24px; font-size:1.1rem; color: var(--text-primary);">2. Clone the Repository</h3>
                 <div class="code-snippet">
+                    <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
                     <pre><code>git clone https://github.com/devtyagi3909/constraintforge.git
 cd constraintforge</code></pre>
                 </div>
@@ -438,6 +498,7 @@ cd constraintforge</code></pre>
                 <p>Run the engine against your RTL. The Topological DFS will flag deep combinational paths, missing CDC synchronizers, and extreme fanout instantly.</p>
                 
                 <div class="code-snippet">
+                    <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
                     <pre><code>python3 diagnose.py <span style="color:#a855f7">picorv32.v</span> --top <span style="color:#a855f7">picorv32</span></code></pre>
                 </div>
                 <ul class="cmd-args">
