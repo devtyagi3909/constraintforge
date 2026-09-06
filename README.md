@@ -41,7 +41,7 @@ constraintforge diagnose rtl/picorv32.v --top picorv32
 
 ## Performance Benchmarks
 
-ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge successfully finds the exact same critical structural bottlenecks while running **250x to 600x faster**.
+ConstraintForge was benchmarked against Vivado's out-of-context (OOC) Synthesis/STA engine. ConstraintForge successfully flags the dominant structural bottlenecks that strongly correlate with Vivado timing failures, giving you actionable feedback while running **250x to 600x faster**.
 
 | Design | Physical LUTs | Vivado STA (s) | ConstraintForge (s) | Speedup |
 | :--- | :--- | :--- | :--- | :--- |

@@ -536,7 +536,7 @@
         <main class="main-content">
             <section>
                 <h1 id="getting-started">Getting Started</h1>
-                <p>Welcome to ConstraintForge, the next-generation static timing and structural analysis engine. ConstraintForge operates purely on structural logic depth via an in-memory Abstract Syntax Tree (AST). It bypasses physical placement and routing overhead to give you setup-time and CDC alerts in milliseconds.</p>
+                <p>Welcome to ConstraintForge, the next-generation pre-synthesis structural linter and diagnostic engine. ConstraintForge operates purely on structural logic depth via an in-memory Abstract Syntax Tree (AST). It bypasses physical placement and routing overhead to give you setup-time and CDC alerts in milliseconds.</p>
             </section>
 
             <section>
@@ -618,7 +618,14 @@
                 <ul class="cmd-args">
                     <li><strong>[file.v]</strong> : The path to the target Verilog or SystemVerilog file.</li>
                     <li><strong>--top &lt;name&gt;</strong> : Specifies the top-level module to extract the DAG from.</li>
+                    <li style="margin-top: 12px; color: var(--text-primary);"><strong>Enterprise / CI Flags:</strong></li>
+                    <li><strong>--depth-threshold &lt;int&gt;</strong> : Configure maximum allowable logic depth (default: 30).</li>
+                    <li><strong>--fanout-threshold &lt;int&gt;</strong> : Configure maximum allowable fanout (default: 100).</li>
+                    <li><strong>--exceptions &lt;file.json&gt;</strong> : Suppress intentional false paths and safe CDCs to eliminate noise.</li>
+                    <li><strong>--explain</strong> : Print the exact node-by-node path trace for identified setup violations.</li>
+                    <li><strong>--sarif</strong> : Output native SARIF format to integrate directly into GitHub Code Scanning.</li>
                 </ul>
+                <p><em>Note: ConstraintForge acts as a strict CI gate. It will return <code>exit(1)</code> if any violation exceeds your configured thresholds, and <code>exit(0)</code> if the structure is clean.</em></p>
 
                 <h3 style="margin-top:40px; font-size:1.25rem; color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">Understanding the Output</h3>
                 <p>When the analysis finishes, the engine provides exact back-annotated source code line numbers for three critical failure modes:</p>
