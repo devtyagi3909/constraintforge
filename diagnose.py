@@ -13,26 +13,23 @@ def run_yosys(file_paths, top_module):
         else:
             read_cmds.append(f"read_verilog {fp}")
     
+    import tempfile
+    import os
+    import json
+    
+    with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as tmp:
+        tmp_name = tmp.name
+        
     script = "; ".join(read_cmds)
-    script += f"; prep -top {top_module}; flatten; opt; techmap; opt; write_json"
+    script += f"; prep -top {top_module}; flatten; opt; techmap; opt; write_json {tmp_name}"
     
     cmd = ["yosys", "-p", script]
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-        # Parse JSON output from stdout
-        json_str = ""
-        capture = False
-        for line in result.stdout.splitlines():
-            if line.strip() == "{":
-                capture = True
-            if capture:
-                json_str += line + "\n"
-                
-        if not json_str:
-            sys.stderr.write("Error: Yosys did not output valid JSON.\n")
-            sys.exit(1)
-            
-        return json.loads(json_str)
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        with open(tmp_name, 'r') as f:
+            yosys_ast = json.load(f)
+        os.remove(tmp_name)
+        return yosys_ast
     except subprocess.CalledProcessError as e:
         sys.stderr.write(f"Yosys failed:\n{e.stderr}\n")
         sys.exit(1)
