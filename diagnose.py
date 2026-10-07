@@ -351,45 +351,49 @@ def generate_sarif_output(results, args):
         })
     print(json.dumps(sarif, indent=2))
 
+def print_terminal_report(results, args, exit_code):
+    """Print the diagnostic report to the terminal."""
+    print(f"## DIAGNOSTIC REPORT: {', '.join(args.files)} ##\n")
+    if results["loops"]:
+        print("[WARNING] Combinational loop(s) detected during DFS!")
+        for l in results["loops"][:5]:
+            print(f"  Loop at: {l['node']} ({l['src']})")
+        print()
+        
+    if results["fanout"]:
+        print(f"[WARNING] High-fanout nets (>{args.fanout_threshold}) detected:")
+        for f in results["fanout"][:5]:
+            print(f"  Net: {f['net']} (Driver: {f['driver']} [{f['src']}]) -> Fanout: {f['count']}")
+        print()
+        
+    if results["setup_violations"]:
+        v = results["setup_violations"][0]
+        print(f"[WARNING] Setup-time risk detected (> {args.depth_threshold} gates):")
+        print(f"  Source:      {v['source']} ({v['source_src']}) [Clk: {v['source_clk']}]")
+        print(f"  Sink:        {v['sink']} ({v['sink_src']}) [Clk: {v['sink_clk']}]")
+        print(f"  Logic Depth: {v['depth']} gates")
+        if args.explain and v['trace']:
+            print("  Path Trace:")
+            for step in v['trace']:
+                print(f"    -> {step['node']} ({step['src']})")
+        print()
+        
+    if results["cdc_violations"]:
+        for c in results["cdc_violations"]:
+            print(f"[!] CDC ALERT: Unsynchronized crossing from {c['source_clk']} to {c['sink_clk']}!")
+            print(f"    Path: {c['source_src']} -> {c['sink_src']}")
+        print()
+        
+    if exit_code == 0:
+        print("[OK] No structural violations detected.\n")
+
     # Output generation
     if args.json:
         print(json.dumps(results, indent=2))
     elif args.sarif:
         generate_sarif_output(results, args)
     else:
-        print(f"## DIAGNOSTIC REPORT: {', '.join(args.files)} ##\n")
-        if results["loops"]:
-            print("[WARNING] Combinational loop(s) detected during DFS!")
-            for l in results["loops"][:5]:
-                print(f"  Loop at: {l['node']} ({l['src']})")
-            print()
-            
-        if results["fanout"]:
-            print(f"[WARNING] High-fanout nets (>{args.fanout_threshold}) detected:")
-            for f in results["fanout"][:5]:
-                print(f"  Net: {f['net']} (Driver: {f['driver']} [{f['src']}]) -> Fanout: {f['count']}")
-            print()
-            
-        if results["setup_violations"]:
-            v = results["setup_violations"][0]
-            print(f"[WARNING] Setup-time risk detected (> {args.depth_threshold} gates):")
-            print(f"  Source:      {v['source']} ({v['source_src']}) [Clk: {v['source_clk']}]")
-            print(f"  Sink:        {v['sink']} ({v['sink_src']}) [Clk: {v['sink_clk']}]")
-            print(f"  Logic Depth: {v['depth']} gates")
-            if args.explain and v['trace']:
-                print("  Path Trace:")
-                for step in v['trace']:
-                    print(f"    -> {step['node']} ({step['src']})")
-            print()
-            
-        if results["cdc_violations"]:
-            for c in results["cdc_violations"]:
-                print(f"[!] CDC ALERT: Unsynchronized crossing from {c['source_clk']} to {c['sink_clk']}!")
-                print(f"    Path: {c['source_src']} -> {c['sink_src']}")
-            print()
-            
-        if exit_code == 0:
-            print("[OK] No structural violations detected.\n")
+        print_terminal_report(results, args, exit_code)
 
     sys.exit(exit_code)
 
