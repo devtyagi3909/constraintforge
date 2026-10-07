@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../c
 from constraintforge.analyzer import is_dff
 
 class TestAnalyzer(unittest.TestCase):
+    """Test suite for the analyzer module."""
     def test_is_dff(self):
         self.assertTrue(is_dff("$_DFF_P_"))
         self.assertTrue(is_dff("$dff"))
