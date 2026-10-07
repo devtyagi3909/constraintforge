@@ -4,11 +4,7 @@ from typing import Sequence, Dict, Any
 
 console = Console()
 
-def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, Any]], top: str, max_depth: int, max_fanout: int) -> None:
-    """Print a formatted terminal report of timing diagnostics."""
-    console.print(f"\n[bold cyan]CONSTRAINTFORGE // TIMING DIAGNOSTICS FOR '{top}'[/bold cyan]\n")
-    
-    # Depth Report
+def print_depth_report(paths: Sequence[Dict[str, Any]], max_depth: int) -> None:
     if not paths:
         console.print(f"[bold green]✔ Zero paths exceed {max_depth} logic levels.[/bold green]\n")
     else:
@@ -23,6 +19,13 @@ def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, An
             
         console.print(table)
         console.print("[dim]Diagnosis: Deep combinational clouds cause setup time violations. Pipeline the logic between these lines.[/dim]\n")
+
+def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, Any]], top: str, max_depth: int, max_fanout: int) -> None:
+    """Print a formatted terminal report of timing diagnostics."""
+    console.print(f"\n[bold cyan]CONSTRAINTFORGE // TIMING DIAGNOSTICS FOR '{top}'[/bold cyan]\n")
+    
+    # Depth Report
+    print_depth_report(paths, max_depth)
 
     # Fanout Report
     if not fanouts:
