@@ -5,10 +5,10 @@ from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../cli')))
 
-from constraintforge.main import main
+from constraintforge.main import cli
 
 class TestMain(unittest.TestCase):
-    @patch('constraintforge.main.sys.argv', ['constraintforge', '--top', 'top_module', 'test.v'])
+    @patch('constraintforge.main.sys.argv', ['constraintforge', 'diagnose', '--top', 'top_module', 'test.v'])
     @patch('constraintforge.main.generate_netlist')
     @patch('constraintforge.main.build_graph')
     @patch('constraintforge.main.analyze_logic_depth')
@@ -20,7 +20,10 @@ class TestMain(unittest.TestCase):
         mock_depth.return_value = []
         mock_fanout.return_value = []
         
-        main()
+        try:
+            cli()
+        except SystemExit:
+            pass
         
         self.assertTrue(mock_yosys.called)
         self.assertTrue(mock_graph.called)
