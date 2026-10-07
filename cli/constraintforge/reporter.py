@@ -20,14 +20,7 @@ def print_depth_report(paths: Sequence[Dict[str, Any]], max_depth: int) -> None:
         console.print(table)
         console.print("[dim]Diagnosis: Deep combinational clouds cause setup time violations. Pipeline the logic between these lines.[/dim]\n")
 
-def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, Any]], top: str, max_depth: int, max_fanout: int) -> None:
-    """Print a formatted terminal report of timing diagnostics."""
-    console.print(f"\n[bold cyan]CONSTRAINTFORGE // TIMING DIAGNOSTICS FOR '{top}'[/bold cyan]\n")
-    
-    # Depth Report
-    print_depth_report(paths, max_depth)
-
-    # Fanout Report
+def print_fanout_report(fanouts: Sequence[Dict[str, Any]], max_fanout: int) -> None:
     if not fanouts:
         console.print(f"[bold green]✔ Zero registers exceed {max_fanout} fanout endpoints.[/bold green]\n")
     else:
@@ -41,3 +34,13 @@ def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, An
             
         console.print(table)
         console.print("[dim]Diagnosis: High fanout causes severe routing delay. Consider register replication (duplication) or BUFG promotion.[/dim]\n")
+
+def print_report(paths: Sequence[Dict[str, Any]], fanouts: Sequence[Dict[str, Any]], top: str, max_depth: int, max_fanout: int) -> None:
+    """Print a formatted terminal report of timing diagnostics."""
+    console.print(f"\n[bold cyan]CONSTRAINTFORGE // TIMING DIAGNOSTICS FOR '{top}'[/bold cyan]\n")
+    
+    # Depth Report
+    print_depth_report(paths, max_depth)
+
+    # Fanout Report
+    print_fanout_report(fanouts, max_fanout)
