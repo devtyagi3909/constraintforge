@@ -55,6 +55,7 @@ def build_graph(json_path: str) -> dict:
     }
 
 def get_nice_name(cell_name: str, cells: dict) -> str:
+    """Format cell name for readable reporting."""
     if cell_name.startswith("PORT_"):
         return cell_name
     cell_data = cells.get(cell_name, {})
