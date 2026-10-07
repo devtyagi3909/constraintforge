@@ -2,7 +2,9 @@ import subprocess
 import tempfile
 import os
 
-def generate_netlist(src_files: list, top_module: str) -> str:
+from typing import Sequence, Optional
+
+def generate_netlist(src_files: Sequence[str], top_module: str) -> Optional[str]:
     """Run Yosys in headless mode to generate a JSON netlist."""
     fd, json_path = tempfile.mkstemp(suffix=".json", prefix="cf_netlist_")
     os.close(fd)
