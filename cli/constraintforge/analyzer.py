@@ -1,10 +1,12 @@
 import json
 from collections import defaultdict
 
+from typing import Dict, Any, Optional
+
 def is_dff(c_type: str) -> bool:
     return c_type.startswith("$_DFF_") or c_type.startswith("$dff")
 
-def build_graph(json_path: str) -> dict:
+def build_graph(json_path: str) -> Optional[Dict[str, Any]]:
     """Parse the Yosys JSON netlist into an adjacency graph for traversal."""
     with open(json_path, 'r') as f:
         netlist = json.load(f)
@@ -54,7 +56,7 @@ def build_graph(json_path: str) -> dict:
         "dff_cells": dff_cells
     }
 
-def get_nice_name(cell_name: str, cells: dict) -> str:
+def get_nice_name(cell_name: str, cells: Dict[str, Any]) -> str:
     """Format cell name for readable reporting."""
     if cell_name.startswith("PORT_"):
         return cell_name
