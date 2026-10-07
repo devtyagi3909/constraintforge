@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../c
 from constraintforge.main import cli
 
 class TestMain(unittest.TestCase):
+    """Test suite for the main CLI entrypoint."""
     @patch('constraintforge.main.sys.argv', ['constraintforge', 'diagnose', '--top', 'top_module', 'test.v'])
     @patch('constraintforge.main.generate_netlist')
     @patch('constraintforge.main.build_graph')
