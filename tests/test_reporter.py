@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../c
 from constraintforge.reporter import print_report
 
 class TestReporter(unittest.TestCase):
+    """Test suite for the timing diagnostics reporter."""
     @patch('constraintforge.reporter.console.print')
     def test_print_report_empty(self, mock_print):
         print_report([], [], "top_module", 30, 100)
