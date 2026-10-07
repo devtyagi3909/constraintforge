@@ -27,5 +27,12 @@ class TestReporter(unittest.TestCase):
         print_depth_report(paths, 30)
         self.assertTrue(mock_print.called)
 
+    @patch('constraintforge.reporter.console.print')
+    def test_print_fanout_report(self, mock_print):
+        from constraintforge.reporter import print_fanout_report
+        fanouts = [{'fanout': 150, 'register': 'reg1'}]
+        print_fanout_report(fanouts, 100)
+        self.assertTrue(mock_print.called)
+
 if __name__ == '__main__':
     unittest.main()
