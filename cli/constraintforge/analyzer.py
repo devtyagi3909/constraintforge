@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 
 def build_graph(json_path: str) -> dict:
+    """Parse the Yosys JSON netlist into an adjacency graph for traversal."""
     with open(json_path, 'r') as f:
         netlist = json.load(f)
         
