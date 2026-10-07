@@ -316,43 +316,46 @@ def diagnose_rtl(args):
                 })
                 exit_code = 1
 
+def generate_sarif_output(results, args):
+    """Generate minimal SARIF output for GitHub Code Scanning."""
+    sarif = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "ConstraintForge",
+                    "informationUri": "https://devtyagi3909.github.io/constraintforge",
+                    "rules": [
+                        {"id": "CF001", "name": "LogicDepth", "shortDescription": {"text": "Logic depth exceeds threshold"}},
+                        {"id": "CF002", "name": "CDC", "shortDescription": {"text": "Unsynchronized Clock Domain Crossing"}},
+                        {"id": "CF003", "name": "HighFanout", "shortDescription": {"text": "Net fanout exceeds threshold"}},
+                        {"id": "CF004", "name": "CombLoop", "shortDescription": {"text": "Combinational loop detected"}}
+                    ]
+                }
+            },
+            "results": []
+        }]
+    }
+    for sv in results["setup_violations"]:
+        sarif["runs"][0]["results"].append({
+            "ruleId": "CF001",
+            "message": {"text": f"Logic depth of {sv['depth']} exceeds threshold of {args.depth_threshold}."},
+            "locations": [{"physicalLocation": {"artifactLocation": {"uri": sv['source_src'].split(':')[0]}}}]
+        })
+    for cl in results["loops"]:
+        sarif["runs"][0]["results"].append({
+            "ruleId": "CF004",
+            "message": {"text": f"Combinational loop detected at {cl['node']}."},
+            "locations": [{"physicalLocation": {"artifactLocation": {"uri": cl['src'].split(':')[0]}}}]
+        })
+    print(json.dumps(sarif, indent=2))
+
     # Output generation
     if args.json:
         print(json.dumps(results, indent=2))
     elif args.sarif:
-        # Minimal SARIF generation for GitHub Code Scanning
-        sarif = {
-            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-            "version": "2.1.0",
-            "runs": [{
-                "tool": {
-                    "driver": {
-                        "name": "ConstraintForge",
-                        "informationUri": "https://devtyagi3909.github.io/constraintforge",
-                        "rules": [
-                            {"id": "CF001", "name": "LogicDepth", "shortDescription": {"text": "Logic depth exceeds threshold"}},
-                            {"id": "CF002", "name": "CDC", "shortDescription": {"text": "Unsynchronized Clock Domain Crossing"}},
-                            {"id": "CF003", "name": "HighFanout", "shortDescription": {"text": "Net fanout exceeds threshold"}},
-                            {"id": "CF004", "name": "CombLoop", "shortDescription": {"text": "Combinational loop detected"}}
-                        ]
-                    }
-                },
-                "results": []
-            }]
-        }
-        for sv in results["setup_violations"]:
-            sarif["runs"][0]["results"].append({
-                "ruleId": "CF001",
-                "message": {"text": f"Logic depth of {sv['depth']} exceeds threshold of {args.depth_threshold}."},
-                "locations": [{"physicalLocation": {"artifactLocation": {"uri": sv['source_src'].split(':')[0]}}}]
-            })
-        for cl in results["loops"]:
-            sarif["runs"][0]["results"].append({
-                "ruleId": "CF004",
-                "message": {"text": f"Combinational loop detected at {cl['node']}."},
-                "locations": [{"physicalLocation": {"artifactLocation": {"uri": cl['src'].split(':')[0]}}}]
-            })
-        print(json.dumps(sarif, indent=2))
+        generate_sarif_output(results, args)
     else:
         print(f"## DIAGNOSTIC REPORT: {', '.join(args.files)} ##\n")
         if results["loops"]:
