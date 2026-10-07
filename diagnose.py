@@ -6,6 +6,10 @@ import os
 from collections import defaultdict
 
 def run_yosys(file_paths, top_module):
+    """
+    Run Yosys in headless mode to process Verilog/SystemVerilog files.
+    Generates and parses a JSON netlist representing the RTL structure.
+    """
     read_cmds = []
     for fp in file_paths:
         if fp.endswith('.sv'):
@@ -38,6 +42,10 @@ def run_yosys(file_paths, top_module):
         sys.exit(1)
 
 def diagnose_rtl(args):
+    """
+    Main diagnostic routine. Performs DFS topological traversal on the loaded AST
+    to identify deep combinational logic paths and high fanout nets.
+    """
     # Load exceptions if provided
     exceptions = {"false_paths": [], "cdc_safe": []}
     if args.exceptions and os.path.exists(args.exceptions):
