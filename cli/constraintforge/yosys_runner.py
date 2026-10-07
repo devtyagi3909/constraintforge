@@ -2,7 +2,7 @@ import subprocess
 import tempfile
 import os
 
-def generate_netlist(src_files, top_module):
+def generate_netlist(src_files: list, top_module: str) -> str:
     fd, json_path = tempfile.mkstemp(suffix=".json", prefix="cf_netlist_")
     os.close(fd)
     
