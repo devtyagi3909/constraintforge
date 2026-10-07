@@ -9,6 +9,7 @@ console = Console()
 
 @click.group()
 def cli():
+    """ConstraintForge CLI entrypoint."""
     pass
 
 @cli.command()
@@ -17,6 +18,7 @@ def cli():
 @click.option('--max-depth', default=20, help="Flag paths exceeding this logic depth")
 @click.option('--max-fanout', default=100, help="Flag registers driving more than this many endpoints")
 def diagnose(src_files, top, max_depth, max_fanout):
+    """Diagnose RTL structural logic depth and fanout issues."""
     with console.status(f"[bold cyan]Flattening {top} via Yosys..."):
         json_path = generate_netlist(src_files, top)
         
