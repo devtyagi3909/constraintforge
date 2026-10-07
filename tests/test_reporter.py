@@ -20,5 +20,12 @@ class TestReporter(unittest.TestCase):
         print_report(paths, fanouts, "top_module", 30, 100)
         self.assertTrue(mock_print.called)
 
+    @patch('constraintforge.reporter.console.print')
+    def test_print_depth_report(self, mock_print):
+        from constraintforge.reporter import print_depth_report
+        paths = [{'depth': 40, 'source': 'foo.v:10', 'sink': 'bar.v:20'}]
+        print_depth_report(paths, 30)
+        self.assertTrue(mock_print.called)
+
 if __name__ == '__main__':
     unittest.main()
