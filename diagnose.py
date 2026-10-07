@@ -41,19 +41,23 @@ def run_yosys(file_paths, top_module):
         sys.stderr.write(f"Failed to parse Yosys JSON: {e}\n")
         sys.exit(1)
 
+def load_exceptions(exceptions_path):
+    """Load false_paths and cdc_safe exceptions from JSON file."""
+    exceptions = {"false_paths": [], "cdc_safe": []}
+    if exceptions_path and os.path.exists(exceptions_path):
+        try:
+            with open(exceptions_path, 'r') as f:
+                exceptions = json.load(f)
+        except Exception as e:
+            sys.stderr.write(f"Failed to load exceptions: {e}\n")
+    return exceptions
+
 def diagnose_rtl(args):
     """
     Main diagnostic routine. Performs DFS topological traversal on the loaded AST
     to identify deep combinational logic paths and high fanout nets.
     """
-    # Load exceptions if provided
-    exceptions = {"false_paths": [], "cdc_safe": []}
-    if args.exceptions and os.path.exists(args.exceptions):
-        try:
-            with open(args.exceptions, 'r') as f:
-                exceptions = json.load(f)
-        except Exception as e:
-            sys.stderr.write(f"Failed to load exceptions: {e}\n")
+    exceptions = load_exceptions(args.exceptions)
             
     if not args.json and not args.sarif:
         print(f"[*] Parsing {', '.join(args.files)} AST via headless Yosys...")
