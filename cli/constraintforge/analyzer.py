@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 def is_dff(c_type: str) -> bool:
     return c_type.startswith("$_DFF_") or c_type.startswith("$dff")
@@ -66,7 +66,7 @@ def get_nice_name(cell_name: str, cells: Dict[str, Any]) -> str:
         return f"{src.split()[0]} (Reg)"
     return cell_name
 
-def analyze_logic_depth(graph, max_depth):
+def analyze_logic_depth(graph: Dict[str, Any], max_depth: int) -> List[Dict[str, Any]]:
     bit_driver = graph["bit_driver"]
     cell_inputs = graph["cell_inputs"]
     cells = graph["cells"]
@@ -159,7 +159,7 @@ def analyze_logic_depth(graph, max_depth):
             
     return unique[:10]
 
-def analyze_fanout(graph, max_fanout):
+def analyze_fanout(graph: Dict[str, Any], max_fanout: int) -> List[Dict[str, Any]]:
     bit_driver = graph["bit_driver"]
     cell_inputs = graph["cell_inputs"]
     cells = graph["cells"]
