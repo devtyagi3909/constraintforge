@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Dict, Any, Optional, List
 
 def is_dff(c_type: str) -> bool:
+    """Check if the given cell type represents a D flip-flop."""
     return c_type.startswith("$_DFF_") or c_type.startswith("$dff")
 
 def build_graph(json_path: str) -> Optional[Dict[str, Any]]:
@@ -67,6 +68,10 @@ def get_nice_name(cell_name: str, cells: Dict[str, Any]) -> str:
     return cell_name
 
 def analyze_logic_depth(graph: Dict[str, Any], max_depth: int) -> List[Dict[str, Any]]:
+    """
+    Traverse the graph to compute the maximum combinational logic depth between registers.
+    Returns paths exceeding max_depth.
+    """
     bit_driver = graph["bit_driver"]
     cell_inputs = graph["cell_inputs"]
     cells = graph["cells"]
@@ -160,6 +165,9 @@ def analyze_logic_depth(graph: Dict[str, Any], max_depth: int) -> List[Dict[str,
     return unique[:10]
 
 def analyze_fanout(graph: Dict[str, Any], max_fanout: int) -> List[Dict[str, Any]]:
+    """
+    Calculate the fanout of each register and return those exceeding max_fanout.
+    """
     bit_driver = graph["bit_driver"]
     cell_inputs = graph["cell_inputs"]
     cells = graph["cells"]
