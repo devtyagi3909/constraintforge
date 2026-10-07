@@ -3,7 +3,7 @@ from rich.table import Table
 
 console = Console()
 
-def print_report(paths, fanouts, top, max_depth, max_fanout):
+def print_report(paths: list, fanouts: list, top: str, max_depth: int, max_fanout: int) -> None:
     console.print(f"\n[bold cyan]CONSTRAINTFORGE // TIMING DIAGNOSTICS FOR '{top}'[/bold cyan]\n")
     
     # Depth Report
