@@ -31,5 +31,19 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_fanout.called)
         self.assertTrue(mock_print.called)
 
+    @patch('constraintforge.main.sys.argv', ['constraintforge', 'diagnose', '--top', 'top_module', 'test.v'])
+    @patch('constraintforge.main.generate_netlist')
+    @patch('constraintforge.main.sys.exit')
+    def test_main_yosys_failure(self, mock_exit, mock_yosys):
+        mock_yosys.return_value = None
+        
+        try:
+            cli()
+        except SystemExit:
+            pass
+            
+        self.assertTrue(mock_yosys.called)
+        mock_exit.assert_called_with(1)
+
 if __name__ == '__main__':
     unittest.main()
