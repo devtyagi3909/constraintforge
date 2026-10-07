@@ -1,6 +1,9 @@
 import json
 from collections import defaultdict
 
+def is_dff(c_type: str) -> bool:
+    return c_type.startswith("$_DFF_") or c_type.startswith("$dff")
+
 def build_graph(json_path: str) -> dict:
     """Parse the Yosys JSON netlist into an adjacency graph for traversal."""
     with open(json_path, 'r') as f:
@@ -25,7 +28,7 @@ def build_graph(json_path: str) -> dict:
     
     for cell_name, cell_data in cells.items():
         c_type = cell_data.get("type", "")
-        if c_type.startswith("$_DFF_") or c_type.startswith("$dff"):
+        if is_dff(c_type):
             dff_cells.append(cell_name)
             
         conns = cell_data.get("connections", {})
@@ -37,7 +40,7 @@ def build_graph(json_path: str) -> dict:
                     if isinstance(b, int):
                         bit_driver[b] = cell_name
             elif dirs.get(port_name) == "input":
-                if (c_type.startswith("$_DFF_") or c_type.startswith("$dff")) and port_name in ["C", "CLK"]:
+                if is_dff(c_type) and port_name in ["C", "CLK"]:
                     continue
                 for b in bits:
                     if isinstance(b, int):
@@ -78,7 +81,7 @@ def analyze_logic_depth(graph, max_depth):
         
         c_type = cells.get(cell_name, {}).get("type", "") if not cell_name.startswith("PORT_") else "PORT"
         
-        if c_type.startswith("$_DFF_") or c_type.startswith("$dff") or c_type == "PORT":
+        if is_dff(c_type) or c_type == "PORT":
             depth_memo[cell_name] = (0, cell_name)
             visited.remove(cell_name)
             return 0, cell_name
