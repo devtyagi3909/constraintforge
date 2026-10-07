@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 
-def build_graph(json_path):
+def build_graph(json_path: str) -> dict:
     with open(json_path, 'r') as f:
         netlist = json.load(f)
         
