@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../c
 from constraintforge.yosys_runner import generate_netlist
 
 class TestYosysRunner(unittest.TestCase):
+    """Test suite for the headless Yosys execution wrapper."""
     @patch('constraintforge.yosys_runner.subprocess.run')
     def test_generate_netlist_success(self, mock_run):
         mock_run.return_value = MagicMock()
