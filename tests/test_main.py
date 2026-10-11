@@ -37,6 +37,7 @@ class TestMain(unittest.TestCase):
     @patch('constraintforge.main.sys.exit')
     def test_main_yosys_failure(self, mock_exit, mock_yosys):
         mock_yosys.return_value = None
+        mock_exit.side_effect = SystemExit(1)
         
         try:
             cli()
