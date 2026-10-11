@@ -3,6 +3,7 @@ import subprocess
 import json
 import sys
 import os
+import tempfile
 from collections import defaultdict
 
 def run_yosys(file_paths, top_module):
@@ -16,10 +17,6 @@ def run_yosys(file_paths, top_module):
             read_cmds.append(f"read_verilog -sv {fp}")
         else:
             read_cmds.append(f"read_verilog {fp}")
-    
-    import tempfile
-    import os
-    import json
     
     with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as tmp:
         tmp_name = tmp.name
