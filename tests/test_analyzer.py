@@ -32,5 +32,18 @@ class TestAnalyzer(unittest.TestCase):
         self.assertEqual(get_nice_name("cell2", cells), "cell2")
         self.assertEqual(get_nice_name("unknown_cell", cells), "unknown_cell")
 
+    def test_build_graph_empty_modules(self):
+        import tempfile
+        import json
+        from constraintforge.analyzer import build_graph
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
+            json.dump({"modules": {}}, f)
+            temp_path = f.name
+        try:
+            self.assertIsNone(build_graph(temp_path))
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
 if __name__ == '__main__':
     unittest.main()
