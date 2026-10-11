@@ -4,14 +4,10 @@ import os
 
 from typing import Sequence, Optional
 
-def generate_netlist(src_files: Sequence[str], top_module: str) -> Optional[str]:
-    """Run Yosys in headless mode to generate a JSON netlist."""
-    fd, json_path = tempfile.mkstemp(suffix=".json", prefix="cf_netlist_")
-    os.close(fd)
-    
+def build_yosys_script(src_files: Sequence[str], top_module: str, json_path: str) -> str:
+    """Construct the Yosys synthesis script for RTL flattening and JSON netlist export."""
     files_str = " ".join(src_files)
-    
-    yosys_script = f"""
+    return f"""
     read_verilog -sv {files_str}
     hierarchy -top {top_module}
     proc
@@ -22,6 +18,13 @@ def generate_netlist(src_files: Sequence[str], top_module: str) -> Optional[str]
     opt
     write_json {json_path}
     """
+
+def generate_netlist(src_files: Sequence[str], top_module: str) -> Optional[str]:
+    """Run Yosys in headless mode to generate a JSON netlist."""
+    fd, json_path = tempfile.mkstemp(suffix=".json", prefix="cf_netlist_")
+    os.close(fd)
+    
+    yosys_script = build_yosys_script(src_files, top_module, json_path)
     
     try:
         subprocess.run(
