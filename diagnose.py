@@ -316,6 +316,16 @@ def diagnose_rtl(args):
                 })
                 exit_code = 1
 
+    # Output generation
+    if args.json:
+        print(json.dumps(results, indent=2))
+    elif args.sarif:
+        generate_sarif_output(results, args)
+    else:
+        print_terminal_report(results, args, exit_code)
+
+    sys.exit(exit_code)
+
 def generate_sarif_output(results, args):
     """Generate minimal SARIF output for GitHub Code Scanning."""
     sarif = {
@@ -387,15 +397,6 @@ def print_terminal_report(results, args, exit_code):
     if exit_code == 0:
         print("[OK] No structural violations detected.\n")
 
-    # Output generation
-    if args.json:
-        print(json.dumps(results, indent=2))
-    elif args.sarif:
-        generate_sarif_output(results, args)
-    else:
-        print_terminal_report(results, args, exit_code)
-
-    sys.exit(exit_code)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ConstraintForge Pre-Synthesis Structural Diagnostic Engine")
