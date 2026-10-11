@@ -7,7 +7,7 @@ def is_dff(c_type: str) -> bool:
     """Check if the given cell type represents a D flip-flop."""
     return c_type.startswith("$_DFF_") or c_type.startswith("$dff")
 
-def build_graph(json_path: str) -> Optional[Dict[str, Any]]:
+def build_graph(json_path: str, top_module: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Parse the Yosys JSON netlist into an adjacency graph for traversal."""
     with open(json_path, 'r') as f:
         netlist = json.load(f)
@@ -16,7 +16,10 @@ def build_graph(json_path: str) -> Optional[Dict[str, Any]]:
     if not modules:
         return None
         
-    top_mod = list(modules.keys())[0]
+    if top_module and top_module in modules:
+        top_mod = top_module
+    else:
+        top_mod = list(modules.keys())[0]
     cells = modules[top_mod].get("cells", {})
     ports = modules[top_mod].get("ports", {})
     

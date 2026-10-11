@@ -31,7 +31,7 @@ def diagnose(src_files: tuple, top: str, max_depth: int, max_fanout: int) -> Non
 
     try:
         with console.status("[bold cyan]Building AST Adjacency List..."):
-            graph = build_graph(json_path)
+            graph = build_graph(json_path, top)
             
         if not graph:
             console.print("[bold red]Failed to build netlist graph.[/bold red]")
