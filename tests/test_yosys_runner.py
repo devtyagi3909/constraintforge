@@ -26,5 +26,15 @@ class TestYosysRunner(unittest.TestCase):
         res = generate_netlist(["test.v"], "top")
         self.assertIsNone(res)
 
+    @patch('constraintforge.yosys_runner.subprocess.run')
+    def test_generate_netlist_multiple_files(self, mock_run):
+        mock_run.return_value = MagicMock()
+        res = generate_netlist(["file1.v", "file2.v"], "top_mod")
+        self.assertIsNotNone(res)
+        args, kwargs = mock_run.call_args
+        self.assertIn("file1.v file2.v", args[0][2])
+        if os.path.exists(res):
+            os.remove(res)
+
 if __name__ == '__main__':
     unittest.main()
