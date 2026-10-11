@@ -45,5 +45,17 @@ class TestAnalyzer(unittest.TestCase):
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
+    def test_analyze_fanout_empty(self):
+        from constraintforge.analyzer import analyze_fanout
+        empty_graph = {
+            "bit_driver": {},
+            "cell_inputs": {},
+            "cells": {},
+            "dff_cells": [],
+            "ports": {}
+        }
+        res = analyze_fanout(empty_graph, max_fanout=10)
+        self.assertEqual(res, [])
+
 if __name__ == '__main__':
     unittest.main()
