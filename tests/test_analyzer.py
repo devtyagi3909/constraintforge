@@ -107,5 +107,21 @@ class TestAnalyzer(unittest.TestCase):
         res = analyze_logic_depth(empty_graph, max_depth=20)
         self.assertEqual(res, [])
 
+    def test_deduplicate_paths(self):
+        from constraintforge.analyzer import deduplicate_paths
+        raw_paths = [
+            {"source": "regA", "sink": "regB", "depth": 15},
+            {"source": "regA", "sink": "regB", "depth": 12},  # duplicate
+            {"source": "regC", "sink": "regD", "depth": 10},
+            {"source": "regE", "sink": "regF", "depth": 8},
+        ]
+        deduped = deduplicate_paths(raw_paths, limit=2)
+        self.assertEqual(len(deduped), 2)
+        self.assertEqual(deduped[0]["depth"], 15)
+        self.assertEqual(deduped[1]["source"], "regC")
+
+        # Test empty
+        self.assertEqual(deduplicate_paths([]), [])
+
 if __name__ == '__main__':
     unittest.main()
