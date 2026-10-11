@@ -29,10 +29,22 @@ class TestReporter(unittest.TestCase):
         self.assertTrue(mock_print.called)
 
     @patch('constraintforge.reporter.console.print')
+    def test_print_depth_report_empty(self, mock_print):
+        from constraintforge.reporter import print_depth_report
+        print_depth_report([], 30)
+        self.assertTrue(mock_print.called)
+
+    @patch('constraintforge.reporter.console.print')
     def test_print_fanout_report(self, mock_print):
         from constraintforge.reporter import print_fanout_report
         fanouts = [{'fanout': 150, 'register': 'reg1'}]
         print_fanout_report(fanouts, 100)
+        self.assertTrue(mock_print.called)
+
+    @patch('constraintforge.reporter.console.print')
+    def test_print_fanout_report_empty(self, mock_print):
+        from constraintforge.reporter import print_fanout_report
+        print_fanout_report([], 100)
         self.assertTrue(mock_print.called)
 
 if __name__ == '__main__':
