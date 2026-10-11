@@ -1,4 +1,5 @@
 import click
+import os
 import sys
 from rich.console import Console
 from .yosys_runner import generate_netlist
@@ -26,14 +27,22 @@ def diagnose(src_files: tuple, top: str, max_depth: int, max_fanout: int) -> Non
         console.print("[bold red]Yosys failed to parse RTL.[/bold red]")
         sys.exit(1)
 
-    with console.status("[bold cyan]Building AST Adjacency List..."):
-        graph = build_graph(json_path)
-    
-    with console.status("[bold cyan]Running Structural Diagnostics..."):
-        critical_paths = analyze_logic_depth(graph, max_depth)
-        fanout_nets = analyze_fanout(graph, max_fanout)
+    try:
+        with console.status("[bold cyan]Building AST Adjacency List..."):
+            graph = build_graph(json_path)
+            
+        if not graph:
+            console.print("[bold red]Failed to build netlist graph.[/bold red]")
+            sys.exit(1)
         
-    print_report(critical_paths, fanout_nets, top, max_depth, max_fanout)
+        with console.status("[bold cyan]Running Structural Diagnostics..."):
+            critical_paths = analyze_logic_depth(graph, max_depth)
+            fanout_nets = analyze_fanout(graph, max_fanout)
+            
+        print_report(critical_paths, fanout_nets, top, max_depth, max_fanout)
+    finally:
+        if os.path.exists(json_path):
+            os.remove(json_path)
 
 if __name__ == '__main__':
     cli()
