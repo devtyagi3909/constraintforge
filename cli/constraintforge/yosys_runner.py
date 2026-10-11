@@ -32,5 +32,12 @@ def generate_netlist(src_files: Sequence[str], top_module: str) -> Optional[str]
         )
         return json_path
     except subprocess.CalledProcessError as e:
+        if os.path.exists(json_path):
+            os.remove(json_path)
         print(e.stderr.decode('utf-8'))
+        return None
+    except FileNotFoundError:
+        if os.path.exists(json_path):
+            os.remove(json_path)
+        print("Error: 'yosys' executable not found in PATH.")
         return None
