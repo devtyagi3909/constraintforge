@@ -57,5 +57,17 @@ class TestAnalyzer(unittest.TestCase):
         res = analyze_fanout(empty_graph, max_fanout=10)
         self.assertEqual(res, [])
 
+    def test_analyze_logic_depth_empty(self):
+        from constraintforge.analyzer import analyze_logic_depth
+        empty_graph = {
+            "bit_driver": {},
+            "cell_inputs": {},
+            "cells": {},
+            "dff_cells": [],
+            "ports": {}
+        }
+        res = analyze_logic_depth(empty_graph, max_depth=20)
+        self.assertEqual(res, [])
+
 if __name__ == '__main__':
     unittest.main()
