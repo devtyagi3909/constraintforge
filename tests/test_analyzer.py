@@ -45,6 +45,44 @@ class TestAnalyzer(unittest.TestCase):
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
+    def test_build_graph_with_top_module(self):
+        import tempfile
+        import json
+        from constraintforge.analyzer import build_graph
+        netlist_data = {
+            "modules": {
+                "sub_mod": {
+                    "ports": {"a": {"direction": "input", "bits": [2]}},
+                    "cells": {}
+                },
+                "target_top": {
+                    "ports": {"clk": {"direction": "input", "bits": [3]}},
+                    "cells": {
+                        "dff1": {
+                            "type": "$_DFF_P_",
+                            "connections": {"D": [3], "Q": [4]},
+                            "port_directions": {"D": "input", "Q": "output"}
+                        }
+                    }
+                }
+            }
+        }
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
+            json.dump(netlist_data, f)
+            temp_path = f.name
+        try:
+            graph = build_graph(temp_path, top_module="target_top")
+            self.assertIsNotNone(graph)
+            self.assertIn("dff1", graph["dff_cells"])
+            self.assertIn("clk", graph["ports"])
+
+            fallback_graph = build_graph(temp_path, top_module="unknown_mod")
+            self.assertIsNotNone(fallback_graph)
+            self.assertIn("a", fallback_graph["ports"])
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
     def test_analyze_fanout_empty(self):
         from constraintforge.analyzer import analyze_fanout
         empty_graph = {
