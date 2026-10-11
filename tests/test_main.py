@@ -47,5 +47,24 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_yosys.called)
         mock_exit.assert_called_with(1)
 
+    @patch('constraintforge.main.sys.argv', ['constraintforge', 'diagnose', '--top', 'top_module', 'test.v'])
+    @patch('constraintforge.main.generate_netlist')
+    @patch('constraintforge.main.build_graph')
+    @patch('constraintforge.main.sys.exit')
+    def test_main_graph_build_failure(self, mock_exit, mock_graph, mock_yosys):
+        mock_yosys.return_value = "dummy.json"
+        mock_graph.return_value = None
+        mock_exit.side_effect = SystemExit(1)
+
+        try:
+            cli()
+        except SystemExit:
+            pass
+
+        self.assertTrue(mock_yosys.called)
+        self.assertTrue(mock_graph.called)
+        mock_exit.assert_called_with(1)
+
+
 if __name__ == '__main__':
     unittest.main()
