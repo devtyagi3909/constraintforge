@@ -13,8 +13,12 @@ class TestAnalyzer(unittest.TestCase):
         self.assertTrue(is_dff("$_DFF_P_"))
         self.assertTrue(is_dff("$dff"))
         self.assertTrue(is_dff("$_DFF_NN0_"))
+        self.assertTrue(is_dff("$_DFF_N_"))
+        self.assertTrue(is_dff("$dffe"))
         self.assertFalse(is_dff("LUT4"))
         self.assertFalse(is_dff("PORT"))
+        self.assertFalse(is_dff("$_AND_"))
+        self.assertFalse(is_dff("INV"))
         self.assertFalse(is_dff(""))
         
     def test_get_nice_name(self):
