@@ -65,6 +65,13 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_graph.called)
         mock_exit.assert_called_with(1)
 
+    def test_version_option(self):
+        from click.testing import CliRunner
+        runner = CliRunner()
+        result = runner.invoke(cli, ['--version'])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn('0.1.0', result.output)
+
 
 if __name__ == '__main__':
     unittest.main()
