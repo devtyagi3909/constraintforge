@@ -123,5 +123,44 @@ class TestAnalyzer(unittest.TestCase):
         # Test empty
         self.assertEqual(deduplicate_paths([]), [])
 
+    def test_analyze_logic_depth_traversal(self):
+        from constraintforge.analyzer import analyze_logic_depth
+        # Graph topology: PORT_IN:din (bit 1) -> c_and (bit 2) -> c_or (bit 3) -> dff1
+        graph = {
+            "bit_driver": {
+                1: "PORT_IN:din",
+                2: "c_and",
+                3: "c_or",
+            },
+            "cell_inputs": {
+                "c_and": [1],
+                "c_or": [2],
+                "dff1": [3],
+            },
+            "cells": {
+                "c_and": {"type": "$_AND_"},
+                "c_or": {"type": "$_OR_"},
+                "dff1": {"type": "$_DFF_P_"},
+            },
+            "dff_cells": ["dff1"],
+            "ports": {
+                "din": {"direction": "input", "bits": [1]},
+                "dout": {"direction": "output", "bits": [3]},
+            }
+        }
+
+        # Threshold of 2 should flag both dff1 and dout (depth 2)
+        results = analyze_logic_depth(graph, max_depth=2)
+        self.assertEqual(len(results), 2)
+        sinks = {r["sink"] for r in results}
+        self.assertIn("dff1", sinks)
+        self.assertIn("PORT_OUT:dout", sinks)
+        for r in results:
+            self.assertEqual(r["depth"], 2)
+            self.assertEqual(r["source"], "PORT_IN:din")
+
+        # Threshold of 3 should flag nothing
+        self.assertEqual(analyze_logic_depth(graph, max_depth=3), [])
+
 if __name__ == '__main__':
     unittest.main()
