@@ -27,6 +27,12 @@ class TestYosysRunner(unittest.TestCase):
         self.assertIsNone(res)
 
     @patch('constraintforge.yosys_runner.subprocess.run')
+    def test_generate_netlist_binary_not_found(self, mock_run):
+        mock_run.side_effect = FileNotFoundError("No such file or directory: 'yosys'")
+        res = generate_netlist(["test.v"], "top")
+        self.assertIsNone(res)
+
+    @patch('constraintforge.yosys_runner.subprocess.run')
     def test_generate_netlist_multiple_files(self, mock_run):
         mock_run.return_value = MagicMock()
         res = generate_netlist(["file1.v", "file2.v"], "top_mod")
