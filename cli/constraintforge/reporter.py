@@ -5,6 +5,7 @@ from typing import Sequence, Dict, Any
 console = Console()
 
 def print_depth_report(paths: Sequence[Dict[str, Any]], max_depth: int) -> None:
+    """Format and print timing critical paths exceeding logic depth threshold."""
     if not paths:
         console.print(f"[bold green]✔ Zero paths exceed {max_depth} logic levels.[/bold green]\n")
     else:
@@ -21,6 +22,7 @@ def print_depth_report(paths: Sequence[Dict[str, Any]], max_depth: int) -> None:
         console.print("[dim]Diagnosis: Deep combinational clouds cause setup time violations. Pipeline the logic between these lines.[/dim]\n")
 
 def print_fanout_report(fanouts: Sequence[Dict[str, Any]], max_fanout: int) -> None:
+    """Format and print registers exceeding maximum allowable fanout."""
     if not fanouts:
         console.print(f"[bold green]✔ Zero registers exceed {max_fanout} fanout endpoints.[/bold green]\n")
     else:
