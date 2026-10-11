@@ -157,16 +157,19 @@ def analyze_logic_depth(graph: Dict[str, Any], max_depth: int) -> List[Dict[str,
                 })
                 
     results.sort(key=lambda x: x["depth"], reverse=True)
-    
+    return deduplicate_paths(results, limit=10)
+
+def deduplicate_paths(paths: List[Dict[str, Any]], limit: int = 10) -> List[Dict[str, Any]]:
+    """Deduplicate timing paths by (source, sink) pair while maintaining order and capping results."""
     seen = set()
     unique = []
-    for r in results:
+    for r in paths:
         key = (r["source"], r["sink"])
         if key not in seen:
             seen.add(key)
             unique.append(r)
-            
-    return unique[:10]
+    return unique[:limit]
+
 
 def analyze_fanout(graph: Dict[str, Any], max_fanout: int) -> List[Dict[str, Any]]:
     """
