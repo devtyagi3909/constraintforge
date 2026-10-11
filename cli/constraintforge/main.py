@@ -2,6 +2,7 @@ import click
 import os
 import sys
 from rich.console import Console
+from . import __version__
 from .yosys_runner import generate_netlist
 from .analyzer import build_graph, analyze_logic_depth, analyze_fanout
 from .reporter import print_report
@@ -9,6 +10,7 @@ from .reporter import print_report
 console = Console()
 
 @click.group()
+@click.version_option(version=__version__, prog_name="constraintforge")
 def cli():
     """ConstraintForge CLI entrypoint."""
     pass
