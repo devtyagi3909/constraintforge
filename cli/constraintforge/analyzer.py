@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Set, Tuple
 
 def is_dff(c_type: str) -> bool:
     """Check if the given cell type represents a D flip-flop."""
@@ -78,7 +78,8 @@ def analyze_logic_depth(graph: Dict[str, Any], max_depth: int) -> List[Dict[str,
     
     depth_memo = {}
     
-    def get_cell_depth(cell_name, visited):
+    def get_cell_depth(cell_name: str, visited: Set[str]) -> Tuple[int, str]:
+        """Recursively calculate cell combinational depth using memoization."""
         if cell_name in depth_memo:
             return depth_memo[cell_name]
             
