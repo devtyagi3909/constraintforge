@@ -1,4 +1,4 @@
-# ConstraintForge 
+ConstraintForge 
 
 **The pre-synthesis structural diagnostic engine that catches timing bottlenecks in milliseconds.**
 
