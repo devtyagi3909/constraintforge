@@ -6,13 +6,36 @@ Traditional FPGA and ASIC design flows suffer from massive feedback latency. You
 
 ConstraintForge shifts structural timing closure entirely to the left. It bypasses physical synthesis, extracts your Abstract Syntax Tree (AST), and runs a Topological DFS to find your exact setup-time, CDC, and fanout bottlenecks in **under 100 milliseconds**.
 
-[![CI](https://github.com/devtyagi3909/constraintforge/actions/workflows/validate-constraints.yml/badge.svg)](https://github.com/devtyagi3909/constraintforge/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/CONTRIBUTING.md)
+[![CI](https://github.com/devtyagi3909/constraintforge/actions/workflows/validate-constraints.yml/badge.svg)](https://github.com/devtyagi3909/constraintforge/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-FF2E4D.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-00FF9C.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/CONTRIBUTING.md) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-161B22.svg?labelColor=0D1117&color=FF2E4D)](CODE_OF_CONDUCT.md)
 
 **[Read the Documentation](https://devtyagi3909.github.io/constraintforge/cli.html)** | **[Timing Calculator](https://devtyagi3909.github.io/constraintforge/timing-calculator.html)** | **[AI Generator](https://devtyagi3909.github.io/constraintforge/ai-generator.html)**
 
 <p align="center">
   <img src="assets/terminal_demo.svg" alt="ConstraintForge Terminal Demo" />
 </p>
+
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph Frontend [RTL Extraction]
+        V[Verilog / SystemVerilog RTL] --> YOSYS[Headless Yosys AST Parser]
+        YOSYS --> DAG[Gate Topology DAG G=(V,E)]
+    end
+
+    subgraph Core [Diagnostic Engine]
+        DAG --> DFS[Topological Depth-First Search]
+        DFS --> LOGIC[Logic Depth Analyzer<br/>Setup Hazards]
+        DFS --> CDC[Clock Domain Crossing<br/>Sync Checks]
+        DFS --> FANOUT[Fanout Tree Inspector<br/>Load Bottlenecks]
+    end
+
+    subgraph Output [Back-Annotation & Synthesis]
+        LOGIC & CDC & FANOUT --> BACK[Source Code Line Mapper]
+        BACK --> REPORT[CLI Diagnostic Report]
+        BACK --> XDC[Vendor Timing Constraints<br/>.xdc / .sdc / .lpf]
+    end
+```
 
 ## The CLI Engine
 
