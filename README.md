@@ -14,7 +14,7 @@ ConstraintForge shifts structural timing closure entirely to the left. It bypass
   <img src="assets/terminal_demo.svg" alt="ConstraintForge Terminal Demo" />
 </p>
 
-## The CLI Engine
+ The CLI Engine
 
 ConstraintForge invokes headless [Yosys](https://yosyshq.net/yosys/) to parse your Verilog into a Directed Acyclic Graph (DAG). Because it operates strictly on the gate topology rather than physical routing, the algorithm scales deterministically at **$O(|V| + |E|)$**.
 
