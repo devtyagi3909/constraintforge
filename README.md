@@ -1,6 +1,6 @@
 ConstraintForge 
 
-**The pre-synthesis structural diagnostic engine that catches timing bottlenecks in milliseconds.**
+*The pre-synthesis structural diagnostic engine that catches timing bottlenecks in milliseconds.**
 
 Traditional FPGA and ASIC design flows suffer from massive feedback latency. You make a 1-line RTL change, wait 20 minutes for physical placement and routing, only to realize you failed setup time because your logic depth was 35 gates deep.
 
