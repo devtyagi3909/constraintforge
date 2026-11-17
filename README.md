@@ -8,7 +8,7 @@ ConstraintForge shifts structural timing closure entirely to the left. It bypass
 
 [![CI](https://github.com/devtyagi3909/constraintforge/actions/workflows/validate-constraints.yml/badge.svg)](https://github.com/devtyagi3909/constraintforge/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/devtyagi3909/constraintforge/blob/main/CONTRIBUTING.md)
 
-**[Read the Documentation](https://devtyagi3909.github.io/constraintforge/cli.html)** | **[Timing Calculator](https://devtyagi3909.github.io/constraintforge/timing-calculator.html)** | **[AI Generator](https://devtyagi3909.github.io/constraintforge/ai-generator.html)**
+*[Read the Documentation](https://devtyagi3909.github.io/constraintforge/cli.html)** | **[Timing Calculator](https://devtyagi3909.github.io/constraintforge/timing-calculator.html)** | **[AI Generator](https://devtyagi3909.github.io/constraintforge/ai-generator.html)**
 
 <p align="center">
   <img src="assets/terminal_demo.svg" alt="ConstraintForge Terminal Demo" />
